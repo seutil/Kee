@@ -104,15 +104,22 @@ class DatabasesTree(QTreeView):
         self.expandsOnDoubleClick()
         self.header().setStretchLastSection(True)
         self.setModel(_DatabasesTreeModel())
-        self._databases = set()
+        self._databases = {}
 
     @pyqtSlot(DatabaseInterface)
     def addDatabase(self, database: DatabaseInterface) -> None:
         if database in self._databases:
             return
 
-        self.model().appendRow(_DatabaseStandardItem(database))
-        self._databases.add(database)
+        item = _DatabaseStandardItem(database)
+        self.model().appendRow(item)
+        self._databases[database] = item
+
+    @pyqtSlot(DatabaseInterface)
+    def removeDatabase(self, database: DatabaseInterface) -> None:
+        item = self._databases[database]
+        self.model().removeRow(item.row())
+        del self._databases[database]
 
     def mousePressEvent(self, event: QMouseEvent) -> None:
         index = self.indexAt(event.pos())

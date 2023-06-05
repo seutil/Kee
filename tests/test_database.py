@@ -30,27 +30,27 @@ class TestSQLite(unittest.TestCase):
 
     def test_create(self) -> None:
         for t in self.test_tbl:
-            db = self.__create_memory_db(t)
-            res = self.__fetch_meta(db)
+            db = self.__create_temp_db(t)
+            res = db._meta
             self.assertEqual(db.status(), Status.OPENED)
             self.assertEqual(res["name"], t["name"])
             self.assertIsInstance(res["master_key_hash"], bytes)
             self.assertIsInstance(res["hash_salt"], bytes)
             self.assertIsInstance(res["cipher_salt"], bytes)
             self.assertEqual(res["master_key_hash"], t["encoder"].encode(t["hasher"].hash(t["master_key"].encode(), res["hash_salt"])))
-            self.assertEqual(res["hasher_id"], t["hasher"].id().value)
-            self.assertEqual(res["cipher_id"], t["cipher"].id().value)
-            self.assertEqual(res["encoder_id"], t["encoder"].id().value)
+            self.assertEqual(res["hasher"].id().value, t["hasher"].id().value)
+            self.assertEqual(res["cipher"].id().value, t["cipher"].id().value)
+            self.assertEqual(res["encoder"].id().value, t["encoder"].id().value)
 
     def test_name(self) -> None:
         for t in self.test_tbl:
-            db = self.__create_memory_db(t)
+            db = self.__create_temp_db(t)
             self.assertEqual(db.name(), t["name"])
             db.close()
 
     def test_close(self) -> None:
         for t in self.test_tbl:
-            db = self.__create_memory_db(t)
+            db = self.__create_temp_db(t)
             db.close()
             self.assertEqual(db.status(), Status.CLOSED)
 
@@ -85,7 +85,7 @@ class TestSQLite(unittest.TestCase):
 
     def test_add_group(self) -> None:
         for t in self.test_tbl:
-            db = self.__create_memory_db(t)
+            db = self.__create_temp_db(t)
             group = PasswordsGroup(name="Passwords", items=[])
             try:
                 db.add_group(group)
@@ -99,7 +99,7 @@ class TestSQLite(unittest.TestCase):
 
     def test_remove_group(self) -> None:
         for t in self.test_tbl:
-            db = self.__create_memory_db(t)
+            db = self.__create_temp_db(t)
             group = PasswordsGroup(name="Passwords", items=[])
             self.assertRaises(ValueError, lambda: db.remove_group(group))
             db.add_group(group)
@@ -114,7 +114,7 @@ class TestSQLite(unittest.TestCase):
             db.remove()
             self.assertFalse(os.path.exists(location))
 
-    def __create_memory_db(self, data: typing.Dict[str, str]) -> SQLiteDatabase:
+    def __create_temp_db(self, data: typing.Dict[str, str]) -> SQLiteDatabase:
         return SQLiteDatabase.create(location=":memory:", **data)
 
     def __create_temp_db(self, data: typing.Dict[str, str]) -> SQLiteDatabase:
@@ -122,12 +122,6 @@ class TestSQLite(unittest.TestCase):
             location=os.path.join(tempfile.gettempdir(), generate.string(10)),
             **data
         )
-
-    def __fetch_meta(self, database: SQLiteDatabase) -> typing.Dict[str, any]:
-        keys = ["name", "master_key_hash", "hash_salt", "cipher_salt", "cipher_id", "hasher_id", "encoder_id"]
-        res = database._connection.cursor().execute(f"SELECT {', '.join(keys)} FROM meta").fetchone()
-        return dict(zip(keys, res))
-
 
 if __name__ == "__main__":
     unittest.main()

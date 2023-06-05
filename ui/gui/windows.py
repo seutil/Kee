@@ -189,6 +189,7 @@ class MainWindow(QMainWindow):
 
         try:
             database.open(master_key[0])
+            self.__setCurrentDatabase(database)
         except ValueError:
             QMessageBox.critical(self, "Database Opening...", "Specified master key is incorrect")
 

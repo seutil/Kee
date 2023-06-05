@@ -39,7 +39,7 @@ class MainWindow(QMainWindow):
             # database actions
             "new-database": QAction("New", self, shortcut=QKeySequence("Ctrl+N"), triggered=self.__newDatabase),
             "open-database": QAction("Open", self, shortcut=QKeySequence("Ctrl+O"), triggered=self.__openDatabase),
-            "close-database": QAction("Close", self, shortcut=QKeySequence("Ctrl+D")),
+            "close-database": QAction("Close", self, shortcut=QKeySequence("Ctrl+D"), triggered=self.__closeDatabase),
             "remove-database": QAction("Remove", self, shortcut=QKeySequence("Ctrl+R"), triggered=self.__removeDatabase),
             "save-database": QAction("Save", self, shortcut=QKeySequence("Ctrl+S")),
             "save-database-as": QAction("Save As...", self, shortcut=QKeySequence("Ctrl+Shift+S")),
@@ -147,6 +147,11 @@ class MainWindow(QMainWindow):
         Config().remove_database(self.__database)
         self.__database.remove()
         self.__tree_databases.removeDatabase(self.__database)
+
+    @pyqtSlot()
+    def __closeDatabase(self) -> None:
+        self.__database.close()
+        self.__setCurrentDatabase(None)
 
     @pyqtSlot(DatabaseInterface)
     def __setCurrentDatabase(self, database: DatabaseInterface) -> None:

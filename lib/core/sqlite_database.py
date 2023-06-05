@@ -62,6 +62,7 @@ class _ClosedState(_BaseState):
             self._database._groups[group.name()] = group
 
         self._loaded_previosly = True
+        self._database._master_key = master_key
         self._database._set_state(self._database._opened_state)
         con.close()
 
@@ -192,16 +193,37 @@ class _ModifiedState(_OpenedState):
     def save(self) -> None:
         con = sqlite3.connect(self._database.location())
         cur = con.cursor()
+        self._save_meta(cur)
         encrypt = self._encrypt_func(cur)
         for group in self._database.groups():
             self._save_group(cur, group)
             for item in group.items():
                 self._save_item(cur, encrypt, item)
 
-            con.commit()
-
+        con.commit()
         self._database._set_state(self._database._opened_state)
         con.close()
+
+    def _save_meta(self, cur) -> None:
+        cur.execute("DELETE FROM meta") # clear previos meta data
+        cur.execute("""
+            INSERT INTO meta(name, master_key_hash, hash_salt, cipher_salt, hasher_id, cipher_id, encoder_id)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        """, [
+            self._database._meta["name"],
+            self._hash_master_key(),
+            self._database._meta["hash_salt"],
+            self._database._meta["cipher_salt"],
+            self._database._meta["hasher"].id().value,
+            self._database._meta["cipher"].id().value,
+            self._database._meta["encoder"].id().value,
+        ])
+
+    def _hash_master_key(self) -> bytes:
+        h = self._database._meta["hasher"]
+        e = self._database._meta["encoder"]
+        hs = self._database._meta["hash_salt"]
+        return e.encode(h.hash(self._database._master_key.encode(), hs))
 
     def _encrypt_func(self, cur) -> typing.Callable[[str], bytes]:
         c = self._database._meta["cipher"]

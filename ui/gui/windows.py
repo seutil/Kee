@@ -43,7 +43,7 @@ class MainWindow(QMainWindow):
             "remove-database": QAction("Remove", self, shortcut=QKeySequence("Ctrl+R"), triggered=self.__removeDatabase),
             "save-database": QAction("Save", self, shortcut=QKeySequence("Ctrl+S"), triggered=lambda: self.__database.save()),
             "save-database-as": QAction("Save As...", self, shortcut=QKeySequence("Ctrl+Shift+S")),
-            "database-settings": QAction("Database Settings...", self),
+            "database-settings": QAction("Database Settings...", self, triggered=lambda: DatabaseSettingsWindow(self.__database).exec_()),
             "change-master-key": QAction("Change Master Key...", self),
             "export-database": QAction("Export...", self),
             "import-database": QAction("Import...", self),
@@ -305,3 +305,86 @@ class NewDatabaseWindow(QDialog):
             msg.setInformativeText("Master key and repeated key is not equal")
 
         return msg if msg.informativeText() else None
+
+
+class DatabaseSettingsWindow(QDialog):
+
+    databaseChanged = pyqtSignal(DatabaseInterface)
+
+    def __init__(self, database: DatabaseInterface, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._database = database
+        self.__initUI()
+
+    def __initUI(self) -> None:
+        self.resize(300, 200)
+        self.setWindowFlags(self.windowFlags() & ~Qt.WindowContextHelpButtonHint)
+        self.setWindowTitle("Database Settings")
+        wgt_tab = QTabWidget()
+        wgt_tab.addTab(self.__generalTab(), "General")
+        wgt_tab.addTab(self.__secureTab(), "Secure")
+        btn_box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        btn_box.rejected.connect(self.reject)
+        btn_box.accepted.connect(self.__save)
+
+        lyt_main = QVBoxLayout(spacing=7)
+        lyt_main.addWidget(wgt_tab)
+        lyt_main.addWidget(btn_box)
+        self.setLayout(lyt_main)
+
+    def __generalTab(self) -> QWidget:
+        self.__edt_name = QLineEdit(self._database.name())
+        self.__edt_location = QLineEdit(self._database.location(), readOnly=True)
+        lyt = QFormLayout()
+        lyt.addRow(QLabel("Database Name"), self.__edt_name)
+        lyt.addRow(QLabel("Database Location"), self.__edt_location)
+        lyt.addRow(QLabel("Groups Count"), QLabel(str(len(self._database.groups()))))
+        wgt = QWidget()
+        wgt.setLayout(lyt)
+        return wgt
+
+    def __secureTab(self) -> QWidget:
+        self.__cbx_hasher = QComboBox()
+        self.__cbx_cipher = QComboBox()
+        self.__cbx_encoder = QComboBox()
+
+        self.__cbx_hasher.addItems([i.value for i in hasher.ID])
+        self.__cbx_cipher.addItems([i.value for i in cipher.ID])
+        self.__cbx_encoder.addItems([i.value for i in encoder.ID])
+
+        self.__cbx_hasher.setCurrentText(self._database.hasher().id().value)
+        self.__cbx_cipher.setCurrentText(self._database.cipher().id().value)
+        self.__cbx_encoder.setCurrentText(self._database.encoder().id().value)
+
+        self.__cbx_hasher.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Preferred)
+        self.__cbx_cipher.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Preferred)
+        self.__cbx_encoder.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Preferred)
+
+        lyt = QFormLayout()
+        lyt.addRow(QLabel("Hash"), self.__cbx_hasher)
+        lyt.addRow(QLabel("Encryption"), self.__cbx_cipher)
+        lyt.addRow(QLabel("Encoding"), self.__cbx_encoder)
+        wgt = QWidget()
+        wgt.setLayout(lyt)
+        return wgt
+
+    def __errorMessage(self) -> QMessageBox:
+        msg = QMessageBox(self, icon=QMessageBox.Critical, windowTitle="Database Settings.", text="Invalid data")
+        if not self.__edt_name.text():
+            msg.setInformativeText("Empty database name is not allowed")
+
+        return msg if msg.informativeText() else None
+
+    @pyqtSlot()
+    def __save(self) -> None:
+        msg = self.__errorMessage()
+        if msg is not None:
+            msg.exec_()
+            return
+
+        self._database.name(self.__edt_name.text())
+        self._database.hasher(hasher.from_id(self.__cbx_hasher.currentText()))
+        self._database.cipher(cipher.from_id(self.__cbx_cipher.currentText()))
+        self._database.encoder(encoder.from_id(self.__cbx_encoder.currentText()))
+        self.databaseChanged.emit(self._database)
+        self.accept()

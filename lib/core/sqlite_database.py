@@ -125,6 +125,7 @@ class _OpenedState(_BaseState):
             return self._database._meta["name"]
 
         self._database._meta["name"] = new_name
+        self._database._set_state(self._database._modified_state)
 
     def status(self) -> Status:
         return Status.OPENED
@@ -134,18 +135,21 @@ class _OpenedState(_BaseState):
             return self._database._meta["hasher"]
 
         self._database._meta["hasher"] = new_hasher
+        self._database._set_state(self._database._modified_state)
 
     def cipher(self, new_cipher: libcipher.CipherInterface = None) -> libcipher.CipherInterface | None:
         if new_cipher is None:
             return self._database._meta["cipher"]
 
         self._database._meta["cipher"] = new_cipher
+        self._database._set_state(self._database._modified_state)
 
     def encoder(self, new_encoder: libencoder.EncoderInterface = None) -> libencoder.EncoderInterface | None:
         if new_encoder is None:
             return self._database._meta["encoder"]
 
         self._database._meta["encoder"] = new_encoder
+        self._database._set_state(self._database._modified_state)
 
     def open(self, master_key: str) -> None:
         ...

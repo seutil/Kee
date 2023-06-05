@@ -120,6 +120,7 @@ class DatabasesTree(QTreeView):
         item = self._databases[database]
         self.model().removeRow(item.row())
         del self._databases[database]
+        self.__emitSignals(None if not self._databases else self.model().item(0))
 
     def mousePressEvent(self, event: QMouseEvent) -> None:
         index = self.indexAt(event.pos())
@@ -127,17 +128,7 @@ class DatabasesTree(QTreeView):
             event.ignore()
             return
 
-        item = self.model().itemFromIndex(index)
-        if type(item) is _DatabaseStandardItem and item._database.status() != Status.CLOSED:
-            self.databaseSelected.emit(item._database)
-            self.groupSelected.emit(None)
-        elif type(item) is _GroupStandardItem:
-            self.databaseSelected.emit(item._group.database())
-            self.groupSelected.emit(item._group)
-        else:
-            self.databaseSelected.emit(None)
-            self.groupSelected.emit(None)
-
+        self.__emitSignals(self.model().itemFromIndex(index))
         super().mousePressEvent(event)
 
     def mouseDoubleClickEvent(self, event: QMouseEvent) -> None:
@@ -152,3 +143,14 @@ class DatabasesTree(QTreeView):
 
         self.databaseOpening.emit(item._database)
         event.accept()
+
+    def __emitSignals(self, item: DatabaseInterface | GroupInterface) -> None:
+        if type(item) is _DatabaseStandardItem and item._database.status() != Status.CLOSED:
+            self.databaseSelected.emit(item._database)
+            self.groupSelected.emit(None)
+        elif type(item) is _GroupStandardItem:
+            self.databaseSelected.emit(item._group.database())
+            self.groupSelected.emit(item._group)
+        else:
+            self.databaseSelected.emit(None)
+            self.groupSelected.emit(None)

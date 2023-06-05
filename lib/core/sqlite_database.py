@@ -37,6 +37,15 @@ class _ClosedState(_BaseState):
     def status(self) -> Status:
         return Status.CLOSED
 
+    def hasher(self, new_hasher: libhasher.HashInterface = None) -> libhasher.HashInterface | None:
+        raise ClosedError("database closed")
+
+    def cipher(self, new_cipher: libcipher.CipherInterface = None) -> libcipher.CipherInterface | None:
+        raise ClosedError("database closed")
+
+    def encoder(self, new_encoder: libencoder.EncoderInterface = None) -> libencoder.EncoderInterface | None:
+        raise ClosedError("database closed")
+
     def open(self, master_key: str) -> None:
         if not self._master_key_valid(master_key):
             raise ValueError("incorrect master key")
@@ -119,6 +128,24 @@ class _OpenedState(_BaseState):
 
     def status(self) -> Status:
         return Status.OPENED
+
+    def hasher(self, new_hasher: libhasher.HashInterface = None) -> libhasher.HashInterface | None:
+        if new_hasher is None:
+            return self._database._meta["hasher"]
+
+        self._database._meta["hasher"] = new_hasher
+
+    def cipher(self, new_cipher: libcipher.CipherInterface = None) -> libcipher.CipherInterface | None:
+        if new_cipher is None:
+            return self._database._meta["cipher"]
+
+        self._database._meta["cipher"] = new_cipher
+
+    def encoder(self, new_encoder: libencoder.EncoderInterface = None) -> libencoder.EncoderInterface | None:
+        if new_encoder is None:
+            return self._database._meta["encoder"]
+
+        self._database._meta["encoder"] = new_encoder
 
     def open(self, master_key: str) -> None:
         ...
@@ -273,6 +300,15 @@ class SQLiteDatabase(DatabaseInterface):
 
     def status(self) -> Status:
         return self._current_state.status()
+
+    def hasher(self, new_hasher: libhasher.HashInterface = None) -> libhasher.HashInterface | None:
+        return self._current_state.hasher(new_hasher)
+
+    def cipher(self, new_cipher: libcipher.CipherInterface = None) -> libcipher.CipherInterface | None:
+        return self._current_state.cipher(new_cipher)
+
+    def encoder(self, new_encoder: libencoder.EncoderInterface = None) -> libencoder.EncoderInterface | None:
+        return self._current_state.encoder(new_encoder)
 
     def open(self, master_key: str) -> None:
         self._current_state.open(master_key)

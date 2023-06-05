@@ -1,8 +1,11 @@
 
 import typing
 from enum import Enum
-
 from PyQt5.QtCore import QMetaType
+
+from lib.crypto.hasher import HashInterface
+from lib.crypto.cipher import CipherInterface
+from lib.crypto.encoder import EncoderInterface
 
 
 SALT_LENGTH = 32
@@ -27,6 +30,15 @@ class DatabaseInterface(QMetaType):
 
     def status(self) -> Status:
         raise NotImpelementedErr("DatabaseInterface.status is not implemented")
+
+    def hasher(self, new_hasher: HashInterface = None) -> HashInterface | None:
+        raise NotImpelementedErr("DatabaseInterface.hasher is not implemented")
+
+    def cipher(self, new_cipher: CipherInterface = None) -> CipherInterface | None:
+        raise NotImpelementedErr("DatabaseInterface.cipher is not implemented")
+
+    def encoder(self, new_encoder: EncoderInterface = None) -> EncoderInterface | None:
+        raise NotImpelementedErr("DatabaseInterface.encoder is not implemented")
 
     def open(self, master_key: str) -> None:
         raise NotImpelementedErr("DatabaseInterface.open is not implemented")

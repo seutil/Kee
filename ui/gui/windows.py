@@ -44,7 +44,7 @@ class MainWindow(QMainWindow):
             "save-database": QAction("Save", self, shortcut=QKeySequence("Ctrl+S"), triggered=lambda: self.__database.save()),
             "save-database-as": QAction("Save As...", self, shortcut=QKeySequence("Ctrl+Shift+S")),
             "database-settings": QAction("Database Settings...", self, triggered=lambda: DatabaseSettingsWindow(self.__database).exec_()),
-            "change-master-key": QAction("Change Master Key...", self),
+            "change-master-key": QAction("Change Master Key...", self, triggered=self.__changeMasterKey),
             "export-database": QAction("Export...", self),
             "import-database": QAction("Import...", self),
             
@@ -153,6 +153,19 @@ class MainWindow(QMainWindow):
         self.__database.close()
         self.__setCurrentDatabase(None)
 
+    @pyqtSlot()
+    def __changeMasterKey(self) -> None:
+        change = QMessageBox.question(self, "Change Master Key", "Are you shure you want change master key?")
+        if change == QMessageBox.No:
+            return
+
+        master_key = QInputDialog.getText(self, "Change Master Key", "New master key: ", QLineEdit.Password)[0]
+        if not master_key:
+            QMessageBox.critical(self, "Change Master Key", "Empty master key is not allowd")
+            return
+
+        self.__database.master_key(master_key)
+
     @pyqtSlot(DatabaseInterface)
     def __setCurrentDatabase(self, database: DatabaseInterface) -> None:
         self.__database = database
@@ -183,12 +196,12 @@ class MainWindow(QMainWindow):
 
     @pyqtSlot(DatabaseInterface)
     def __unlockDatabase(self, database: DatabaseInterface) -> None:
-        master_key = QInputDialog.getText(self, "Datbase Opening...", "Master Key: ", QLineEdit.Password)
-        if not master_key[1]:
+        master_key = QInputDialog.getText(self, "Datbase Opening...", "Master Key: ", QLineEdit.Password)[0]
+        if not master_key:
             return
 
         try:
-            database.open(master_key[0])
+            database.open(master_key)
             self.__setCurrentDatabase(database)
         except ValueError:
             QMessageBox.critical(self, "Database Opening...", "Specified master key is incorrect")

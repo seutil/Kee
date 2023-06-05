@@ -48,4 +48,3 @@ class OpenDatabaseDialog(QFileDialog):
 
     def location(self) -> str:
         self.selectedFiles()[0]
-

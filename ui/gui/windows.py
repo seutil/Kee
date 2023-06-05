@@ -108,6 +108,7 @@ class MainWindow(QMainWindow):
         for db in Config().databases():
             self.__tree_databases.addDatabase(db)
 
+        self.__tree_databases.databaseOpening.connect(self.__unlockDatabase)
         self.__tree_databases.databaseSelected.connect(self.__setCurrentDatabase)
         self.__tree_databases.groupSelected.connect(self.__setCurrentGroup)
         
@@ -175,6 +176,17 @@ class MainWindow(QMainWindow):
     @pyqtSlot(GroupInterface)
     def __setCurrentGroup(self, group: GroupInterface) -> None:
         self.__group = group
+
+    @pyqtSlot(DatabaseInterface)
+    def __unlockDatabase(self, database: DatabaseInterface) -> None:
+        master_key = QInputDialog.getText(self, "Datbase Opening...", "Master Key: ", QLineEdit.Password)
+        if not master_key[1]:
+            return
+
+        try:
+            database.open(master_key[0])
+        except ValueError:
+            QMessageBox.critical(self, "Database Opening...", "Specified master key is incorrect")
 
 
 class NewDatabaseWindow(QDialog):

@@ -16,7 +16,7 @@ class _DatabaseStandardItem(QStandardItem):
     def data(self, role: Qt.ItemDataRole) -> QVariant:
         if role == Qt.DisplayRole:
             self._updateChilds()
-            return self._database.name()
+            return self._database.name() + (" *" if self._database.status() == Status.MODIFIED else "")
 
         if role == Qt.DecorationRole:
             closed = self._database.status() == Status.CLOSED

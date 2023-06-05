@@ -42,6 +42,7 @@ class _ClosedState(_BaseState):
             raise ValueError("incorrect master key")
 
         if self._loaded_previosly:
+            self._database._set_state(self._database._opened_state)
             return
 
         con = sqlite3.connect(self._database.location())

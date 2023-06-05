@@ -1,0 +1,17 @@
+<!DOCTYPE RCC>
+<RCC version="1.0">
+    <qresource prefix="icons">
+        <file alias="show-password">icons/show-password.png</file>
+        <file alias="hide-password">icons/hide-password.png</file>
+        <file alias="create">icons/create.png</file>
+        <file alias="generate">icons/generate.png</file>
+        <file alias="dots">icons/dots.png</file>
+        <file alias="lock">icons/lock.png</file>
+        <file alias="unlock">icons/unlock.png</file>
+        <file alias="key">icons/key.png</file>
+        <file alias="credit-card">icons/credit-card.png</file>
+        <file alias="id-card">icons/id-card.png</file>
+        <file alias="url">icons/url.png</file>
+        <file alias="key-solid">icons/key-solid.png</file>
+    </qresource>
+</RCC>

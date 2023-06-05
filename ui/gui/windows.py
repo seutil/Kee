@@ -7,9 +7,10 @@ import lib.crypto.encoder as encoder
 import lib.crypto.hasher as hasher
 import lib.crypto.cipher as cipher
 import lib.crypto.generate as generate
-from lib.core.database import DatabaseInterface
-from lib.core.sqlite_database import SQLiteDatabase
 from lib.core.config import Config
+from lib.core.database import Status, DatabaseInterface
+from lib.core.sqlite_database import SQLiteDatabase
+from lib.core.data.group import GroupInterface
 from . import line_edits, dialogs, trees, tables
 
 
@@ -27,16 +28,18 @@ class MainWindow(QMainWindow):
         self.__initActions()
         self.__initUI()
         self.__initMenu()
+        self.__setCurrentDatabase(None)
+        self.__setCurrentGroup(None)
     
     def __initActions(self) -> None:
-        self._actions = {
+        self.__actions = {
             "exit": QAction("Exit", self, shortcut=QKeySequence("Ctrl+Q"), triggered=QApplication.exit),
 
             # database actions
             "new-database": QAction("New", self, shortcut=QKeySequence("Ctrl+N"), triggered=self.__newDatabase),
             "open-database": QAction("Open", self, shortcut=QKeySequence("Ctrl+O"), triggered=self.__openDatabase),
             "close-database": QAction("Close", self, shortcut=QKeySequence("Ctrl+D")),
-            "remove-database": QAction("Remove", self, shortcut=QKeySequence("Ctrl+R")),
+            "remove-database": QAction("Remove", self, shortcut=QKeySequence("Ctrl+R"), triggered=self.__removeDatabase),
             "save-database": QAction("Save", self, shortcut=QKeySequence("Ctrl+S")),
             "save-database-as": QAction("Save As...", self, shortcut=QKeySequence("Ctrl+Shift+S")),
             "database-settings": QAction("Database Settings...", self),
@@ -63,48 +66,51 @@ class MainWindow(QMainWindow):
 
     def __initMenu(self) -> None:
         database_menu = self.menuBar().addMenu("Database")
-        database_menu.addAction(self._actions["new-database"])
-        database_menu.addAction(self._actions["open-database"])
-        database_menu.addAction(self._actions["close-database"])
-        database_menu.addAction(self._actions["remove-database"])
+        database_menu.addAction(self.__actions["new-database"])
+        database_menu.addAction(self.__actions["open-database"])
+        database_menu.addAction(self.__actions["close-database"])
+        database_menu.addAction(self.__actions["remove-database"])
         database_menu.addSeparator()
-        database_menu.addAction(self._actions["save-database"])
-        database_menu.addAction(self._actions["save-database-as"])
+        database_menu.addAction(self.__actions["save-database"])
+        database_menu.addAction(self.__actions["save-database-as"])
         database_menu.addSeparator()
-        database_menu.addAction(self._actions["database-settings"])
-        database_menu.addAction(self._actions["change-master-key"])
+        database_menu.addAction(self.__actions["database-settings"])
+        database_menu.addAction(self.__actions["change-master-key"])
         database_menu.addSeparator()
-        database_menu.addAction(self._actions["import-database"])
-        database_menu.addAction(self._actions["export-database"])
+        database_menu.addAction(self.__actions["import-database"])
+        database_menu.addAction(self.__actions["export-database"])
         database_menu.addSeparator()
-        database_menu.addAction(self._actions["exit"])
+        database_menu.addAction(self.__actions["exit"])
 
         group_menu = self.menuBar().addMenu("Group")
         group_add = group_menu.addMenu("Add")
-        group_add.addAction(self._actions["add-group-passwords"])
-        group_add.addAction(self._actions["add-group-cards"])
-        group_add.addAction(self._actions["add-group-identities"])
-        group_menu.addAction(self._actions["remove-group"])
-        group_menu.addAction(self._actions["clear-group"])
+        group_add.addAction(self.__actions["add-group-passwords"])
+        group_add.addAction(self.__actions["add-group-cards"])
+        group_add.addAction(self.__actions["add-group-identities"])
+        group_menu.addAction(self.__actions["remove-group"])
+        group_menu.addAction(self.__actions["clear-group"])
         group_menu.addSeparator()
-        group_menu.addAction(self._actions["rename-group"])
+        group_menu.addAction(self.__actions["rename-group"])
         group_menu.addSeparator()
         group_import = group_menu.addMenu("Import")
-        group_import.addAction(self._actions["import-group-csv"])
-        group_import.addAction(self._actions["import-group-json"])
+        group_import.addAction(self.__actions["import-group-csv"])
+        group_import.addAction(self.__actions["import-group-json"])
         group_export = group_menu.addMenu("Export")
-        group_export.addAction(self._actions["export-group-csv"])
-        group_export.addAction(self._actions["export-group-json"])
+        group_export.addAction(self.__actions["export-group-csv"])
+        group_export.addAction(self.__actions["export-group-json"])
         group_menu.addSeparator()
 
         group_item = self.menuBar().addMenu("Item")
 
     def __initUI(self) -> None:
+        self.__tbl_group = tables.GroupTable()
         self.__tree_databases = trees.DatabasesTree()
         for db in Config().databases():
             self.__tree_databases.addDatabase(db)
 
-        self.__tbl_group = tables.GroupTable()
+        self.__tree_databases.databaseSelected.connect(self.__setCurrentDatabase)
+        self.__tree_databases.groupSelected.connect(self.__setCurrentGroup)
+        
         wgt_main = QSplitter()
         wgt_main.addWidget(self.__tree_databases)
         wgt_main.addWidget(self.__tbl_group)
@@ -125,6 +131,44 @@ class MainWindow(QMainWindow):
             return
 
         self.__tree_databases.addDatabase(SQLiteDatabase(dlg.location()))
+
+    @pyqtSlot()
+    def __removeDatabase(self) -> None:
+        delete = QMessageBox.question(
+            self,
+            "Remove Database",
+            f"Are you shure you want to remove database \"{self.__database.name()}\""
+        )
+        if not delete:
+            return
+
+        self.__database.remove()
+        Config().remove_database(db)
+        self.__database = None
+        QMessageBox.information(
+            self,
+            "Remove Database",
+            f"Database {db.name()} was been removed"
+        )
+
+    @pyqtSlot(DatabaseInterface)
+    def __setCurrentDatabase(self, database: DatabaseInterface) -> None:
+        self.__database = database
+        actions = [
+            "close-database",
+            "remove-database",
+            "save-database",
+            "save-database-as",
+            "database-settings",
+            "change-master-key",
+            "export-database",
+        ]
+        for action in actions:
+            self.__actions[action].setEnabled(database is not None)
+
+    @pyqtSlot(GroupInterface)
+    def __setCurrentGroup(self, group: GroupInterface) -> None:
+        self.__group = group
 
 
 class NewDatabaseWindow(QDialog):

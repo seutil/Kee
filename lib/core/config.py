@@ -52,7 +52,6 @@ class Config:
                 self._databases = [SQLiteDatabase(loc) for loc in config["databases"]]
 
     def _save(self) -> None:
-        print(self._databases)
         with open(self._config_path, "w") as yaml_file:
             data = {
                 "databases": [db.location() for db in self._databases]

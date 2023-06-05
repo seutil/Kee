@@ -41,7 +41,7 @@ class MainWindow(QMainWindow):
             "open-database": QAction("Open", self, shortcut=QKeySequence("Ctrl+O"), triggered=self.__openDatabase),
             "close-database": QAction("Close", self, shortcut=QKeySequence("Ctrl+D"), triggered=self.__closeDatabase),
             "remove-database": QAction("Remove", self, shortcut=QKeySequence("Ctrl+R"), triggered=self.__removeDatabase),
-            "save-database": QAction("Save", self, shortcut=QKeySequence("Ctrl+S")),
+            "save-database": QAction("Save", self, shortcut=QKeySequence("Ctrl+S"), triggered=lambda: self.__database.save()),
             "save-database-as": QAction("Save As...", self, shortcut=QKeySequence("Ctrl+Shift+S")),
             "database-settings": QAction("Database Settings...", self),
             "change-master-key": QAction("Change Master Key...", self),

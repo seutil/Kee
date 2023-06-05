@@ -95,8 +95,8 @@ class _DatabasesTreeModel(QStandardItemModel):
 class DatabasesTree(QTreeView):
 
     databaseOpening = pyqtSignal(object)
-    databaseSelected = pyqtSignal(bool, object)
-    groupSelected = pyqtSignal(bool, object)
+    databaseSelected = pyqtSignal(object)
+    groupSelected = pyqtSignal(object)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -122,14 +122,14 @@ class DatabasesTree(QTreeView):
 
         item = self.model().itemFromIndex(index)
         if type(item) is _DatabaseStandardItem and item._database.status() != Status.CLOSED:
-            self.databaseSelected.emit(True, item._database)
-            self.groupSelected.emit(False, None)
+            self.databaseSelected.emit(item._database)
+            self.groupSelected.emit(None)
         elif type(item) is _GroupStandardItem:
-            self.databaseSelected.emit(True, item._group.database())
-            self.groupSelected.emit(True, item._group)
+            self.databaseSelected.emit(item._group.database())
+            self.groupSelected.emit(item._group)
         else:
-            self.databaseSelected.emit(False, None)
-            self.groupSelected.emit(False, None)
+            self.databaseSelected.emit(None)
+            self.groupSelected.emit(None)
 
         super().mousePressEvent(event)
 

@@ -37,6 +37,9 @@ class _ClosedState(_BaseState):
     def status(self) -> Status:
         return Status.CLOSED
 
+    def master_key(self, new_master_key: str = None) -> str | None:
+        raise ClosedError("database closed")
+
     def hasher(self, new_hasher: libhasher.HashInterface = None) -> libhasher.HashInterface | None:
         raise ClosedError("database closed")
 
@@ -47,7 +50,7 @@ class _ClosedState(_BaseState):
         raise ClosedError("database closed")
 
     def open(self, master_key: str) -> None:
-        if not self._master_key_valid(master_key):
+        if not self._valid_master_key(master_key):
             raise ValueError("incorrect master key")
 
         if self._loaded_previosly:
@@ -87,7 +90,10 @@ class _ClosedState(_BaseState):
     def remove_group(self, group: "GroupInterface") -> None:
         raise ClosedError("database closed")
 
-    def _master_key_valid(self, master_key: str) -> bool:
+    def _valid_master_key(self, master_key: str) -> bool:
+        if self._database._master_key is not None:
+            return self._database._master_key == master_key
+
         mkh = self._database._meta["master_key_hash"]
         h = self._database._meta["hasher"]
         e = self._database._meta["encoder"]
@@ -130,6 +136,16 @@ class _OpenedState(_BaseState):
 
     def status(self) -> Status:
         return Status.OPENED
+
+    def master_key(self, new_master_key: str = None) -> str | None:
+        if new_master_key is None:
+            return self._database._master_key
+        elif new_master_key == self._database._master_key:
+            return
+
+        self._database._master_key = new_master_key
+        self._database._set_state(self._database._modified_state)
+
 
     def hasher(self, new_hasher: libhasher.HashInterface = None) -> libhasher.HashInterface | None:
         if new_hasher is None:
@@ -323,6 +339,9 @@ class SQLiteDatabase(DatabaseInterface):
 
     def name(self, new_name: str = None) -> str | None:
         return self._current_state.name(new_name)
+
+    def master_key(self, new_master_key: str = None) -> str | None:
+        return self._current_state.master_key(new_master_key)
 
     def status(self) -> Status:
         return self._current_state.status()

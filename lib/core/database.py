@@ -31,6 +31,9 @@ class DatabaseInterface(QMetaType):
     def status(self) -> Status:
         raise NotImpelementedErr("DatabaseInterface.status is not implemented")
 
+    def master_key(self, new_master_key: str = None) -> str | None:
+        raise NotImpelementedErr("DatabaseInterface.master_key is not implemented")
+
     def hasher(self, new_hasher: HashInterface = None) -> HashInterface | None:
         raise NotImpelementedErr("DatabaseInterface.hasher is not implemented")
 

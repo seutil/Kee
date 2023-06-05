@@ -34,6 +34,7 @@ class Config:
 
     def remove_database(self, database: SQLiteDatabase) -> None:
         self._databases.remove(database)
+        self._save()
 
     def _read(self) -> None:
         if not os.path.exists(self._config_dir):

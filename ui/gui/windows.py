@@ -142,14 +142,11 @@ class MainWindow(QMainWindow):
         if not delete:
             return
 
+        self.__tree_databases.removeDatabase(self.__database)
+        Config().remove_database(self.__database)
         self.__database.remove()
-        Config().remove_database(db)
         self.__database = None
-        QMessageBox.information(
-            self,
-            "Remove Database",
-            f"Database {db.name()} was been removed"
-        )
+
 
     @pyqtSlot(DatabaseInterface)
     def __setCurrentDatabase(self, database: DatabaseInterface) -> None:
@@ -162,6 +159,15 @@ class MainWindow(QMainWindow):
             "database-settings",
             "change-master-key",
             "export-database",
+            "add-group-cards",
+            "add-group-passwords",
+            "add-group-identities",
+            "export-group-csv",
+            "export-group-json",
+            "import-group-csv",
+            "import-group-json",
+            "clear-group",
+            "remove-group"
         ]
         for action in actions:
             self.__actions[action].setEnabled(database is not None)

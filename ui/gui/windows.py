@@ -23,6 +23,7 @@ class MainWindow(QMainWindow):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        Config()
         self.setWindowTitle("Kee")
         self.resize(750, 500)
         self.__initActions()
@@ -140,14 +141,12 @@ class MainWindow(QMainWindow):
             "Remove Database",
             f"Are you shure you want to remove database \"{self.__database.name()}\""
         )
-        if not delete:
+        if delete == QMessageBox.No:
             return
 
-        self.__tree_databases.removeDatabase(self.__database)
         Config().remove_database(self.__database)
         self.__database.remove()
-        self.__database = None
-
+        self.__tree_databases.removeDatabase(self.__database)
 
     @pyqtSlot(DatabaseInterface)
     def __setCurrentDatabase(self, database: DatabaseInterface) -> None:

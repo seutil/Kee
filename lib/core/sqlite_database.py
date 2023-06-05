@@ -26,11 +26,11 @@ class _ClosedState(_BaseState):
 
     def __init__(self, database: "SQLiteDatabase"):
         super().__init__(database)
-        self.loaded_previosly = False 
+        self._loaded_previosly = False 
 
     def name(self, new_name: str = None) -> str | None:
         if new_name is None:
-            return self._database._name
+            return self._database._meta["name"]
         
         raise ClosedError("database closed")
 
@@ -38,20 +38,22 @@ class _ClosedState(_BaseState):
         return Status.CLOSED
 
     def open(self, master_key: str) -> None:
-        self._database._connection = sqlite3.connect(self._database.location())
-        cur = self._database._connection.cursor()
-        if not self._master_key_valid(cur, master_key):
+        if not self._master_key_valid(master_key):
             raise ValueError("incorrect master key")
 
-        if self.loaded_previosly:
+        if self._loaded_previosly:
             return
 
-        dec = self._decrypt_func(cur, master_key)
+        con = sqlite3.connect(self._database.location())
+        cur = con.cursor()
+        dec = self._decrypt_func(master_key)
         for group in self._load_groups(cur):
             self._load_items(cur, dec, group)
             self._database._groups[group.name()] = group
 
+        self._loaded_previosly = True
         self._database._set_state(self._database._opened_state)
+        con.close()
 
     def close(self) -> None:
         ...
@@ -74,32 +76,24 @@ class _ClosedState(_BaseState):
     def remove_group(self, group: "GroupInterface") -> None:
         raise ClosedError("database closed")
 
-    def _master_key_valid(self, cur, master_key: str) -> bool:
-        res = cur.execute("""
-            SELECT master_key_hash, hash_salt, hasher_id, encoder_id
-            FROM meta
-        """).fetchone()
-        hasher = libhasher.from_id(res[2])
-        encoder = libencoder.from_id(res[3])
-        return res[0] == encoder.encode(hasher.hash(master_key.encode(), res[1]))
+    def _master_key_valid(self, master_key: str) -> bool:
+        mkh = self._database._meta["master_key_hash"]
+        h = self._database._meta["hasher"]
+        e = self._database._meta["encoder"]
+        hs = self._database._meta["hash_salt"]
+        return mkh == e.encode(h.hash(master_key.encode(), hs))
 
-    def _decrypt_func(self, cur, master_key: str) -> typing.Callable[[bytes], str]:
-        res = cur.execute("""
-            SELECT cipher_salt, cipher_id, encoder_id
-            FROM meta
-        """).fetchone()
-        cipher = libcipher.from_id(res[1])
-        encoder = libencoder.from_id(res[2])
+    def _decrypt_func(self, master_key: str) -> typing.Callable[[bytes], str]:
         def decrypt(data: bytes):
-            decoded = encoder.decode(data)
-            decrypted = cipher.decrypt(decoded, master_key.encode(), res[0])
+            decoded = self._database._meta["encoder"].decode(data)
+            decrypted = self._database._meta["cipher"].decrypt(
+                decoded,
+                master_key.encode(),
+                self._database._meta["cipher_salt"]
+            )
             return decrypted.decode('utf-8')
 
         return decrypt
-
-    def _load_meta(self, cur) -> None:
-        res = cur.execute("SELECT name FROM meta").fetchone()
-        self._database._name = res[0]
 
     def _load_groups(self, cur) -> GroupInterface:
         res = cur.execute("SELECT name, type FROM `group`").fetchall()
@@ -118,9 +112,9 @@ class _OpenedState(_BaseState):
 
     def name(self, new_name: str = None) -> str | None:
         if new_name is None:
-            return self._database._name
+            return self._database._meta["name"]
 
-        self._database._name = new_name
+        self._database._meta["name"] = new_name
 
     def status(self) -> Status:
         return Status.OPENED
@@ -129,7 +123,6 @@ class _OpenedState(_BaseState):
         ...
 
     def close(self) -> None:
-        self._database._connection.close()
         self._database._set_state(self._database._closed_state)
 
     def save(self) -> None:
@@ -149,7 +142,6 @@ class _OpenedState(_BaseState):
         self._database._set_state(self._database._modified_state)
 
     def remove(self) -> None:
-        self._database.close()
         os.remove(self._database.location())
 
     def remove_group(self, group: "GroupInterface") -> None:
@@ -166,27 +158,26 @@ class _ModifiedState(_OpenedState):
         return Status.MODIFIED
 
     def save(self) -> None:
-        cur = self._database._connection.cursor()
+        con = sqlite3.connect(self._database.location())
+        cur = con.cursor()
         encrypt = self._encrypt_func(cur)
         for group in self._database.groups():
             self._save_group(cur, group)
             for item in group.items():
                 self._save_item(cur, encrypt, item)
 
-            self._database._connection.commit()
+            con.commit()
 
         self._database._set_state(self._database._opened_state)
+        con.close()
 
     def _encrypt_func(self, cur) -> typing.Callable[[str], bytes]:
-        res = cur.execute("""
-            SELECT cipher_salt, cipher_id, encoder_id
-            FROM meta
-        """).fetchone()
-        cipher = libcipher.from_id(res[1])
-        encoder = libencoder.from_id(res[2])
+        c = self._database._meta["cipher"]
+        e = self._database._meta["encoder"]
+        cs = self._database._meta["cipher_salt"]
         def encrypt(data: str) -> str:
-            encrypted = cipher.encrypt(data.encode(), self._database._master_key.encode(), res[0])
-            encoded = encoder.encode(encrypted)
+            encrypted = c.encrypt(data.encode(), self._database._master_key.encode(), cs)
+            encoded = e.encode(encrypted)
             return encoded
 
         return encrypt
@@ -254,28 +245,24 @@ class SQLiteDatabase(DatabaseInterface):
             VALUES (?, ?, ?, ?, ?, ?, ?);
         """, [name, master_key_hash, hash_salt, cipher_salt, libcipher.ID(cipher.id()).value, libhasher.ID(hasher.id()).value, libencoder.ID(encoder.id()).value])
         con.commit()
+        con.close()
         db = SQLiteDatabase(location)
-        db._connection = con
-        db._name = name
         db._master_key = master_key
-        db._hasher = hasher
-        db._cipher = cipher
-        db._encoder = encoder
         db._set_state(db._opened_state)
         return db
 
     def __init__(self, location: str):
         super().__init__()
-        self._connection = None
-        self._name = "<DATABASE>"
         self._location = location
         self._master_key = None
         self._groups = {}
-
+        
         self._closed_state = _ClosedState(self)
         self._opened_state = _OpenedState(self)
         self._modified_state = _ModifiedState(self)
         self._current_state = self._closed_state
+        
+        self._load_meta()
 
     def location(self) -> str:
         return self._location
@@ -315,6 +302,24 @@ class SQLiteDatabase(DatabaseInterface):
             raise ValueError("Unsupported storage transtion from closed to modified state")
 
         self._current_state = state
+
+    def _load_meta(self) -> None:
+        con = sqlite3.connect(self.location())
+        cur = con.cursor()
+        res = cur.execute("""
+            SELECT name, master_key_hash, hash_salt, cipher_salt, hasher_id, cipher_id, encoder_id
+            FROM meta
+        """).fetchone()
+        self._meta = {
+            "name": res[0],
+            "master_key_hash": res[1],
+            "hash_salt": res[2],
+            "cipher_salt": res[3],
+            "hasher": libhasher.from_id(res[4]),
+            "cipher": libcipher.from_id(res[5]),
+            "encoder": libencoder.from_id(res[6])
+        }
+        con.close()
 
     def __hash__(self) -> hash:
         return hash(self.location())

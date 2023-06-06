@@ -2,7 +2,8 @@
 import typing
 from enum import Enum
 
-from .item import PasswordItem, CardItem, IdentityItem
+from ..database import DatabaseInterface
+from .item import ItemInterface, PasswordItem, CardItem, IdentityItem
 
 from PyQt5.QtCore import QMetaType
 
@@ -15,46 +16,42 @@ class Type(Enum):
 
 class GroupInterface(QMetaType):
 
-    def database(self) -> "DatabaseInterface":
-        raise NotImpelementedErr("GroupInterface.database is not implemented")
+    def database(self) -> DatabaseInterface:
+        raise NotImplementedError("GroupInterface.database is not implemented")
 
     def name(self, new_name: str = None) -> str | None:
-        raise NotImpelementedErr("GroupInterface.name is not implemented")
+        raise NotImplementedError("GroupInterface.name is not implemented")
 
     def type(self) -> Type:
-        raise NotImpelementedErr("GroupInterface.type is not implemented")
+        raise NotImplementedError("GroupInterface.type is not implemented")
 
     def remove(self) -> None:
-        raise NotImpelementedErr("GroupInterface.remove is not implemented")
+        raise NotImplementedError("GroupInterface.remove is not implemented")
 
-    def item(self, pos: int) -> "ItemInterface":
-        raise NotImpelementedErr("GroupInterface.item is not implemented")
+    def item(self, pos: int) -> ItemInterface:
+        raise NotImplementedError("GroupInterface.item is not implemented")
 
-    def items(self) -> typing.List["ItemInterface"]:
-        raise NotImpelementedErr("GroupInterface.items is not implemented")
+    def items(self) -> typing.List[ItemInterface]:
+        raise NotImplementedError("GroupInterface.items is not implemented")
 
-    def add_item(self, item: "ItemInterface") -> None:
-        raise NotImpelementedErr("GroupInterface.add_item is not implemented")
+    def add_item(self, item: ItemInterface) -> None:
+        raise NotImplementedError("GroupInterface.add_item is not implemented")
 
-    def remove_item(self, item: "ItemInterface") -> None:
-        raise NotImpelementedErr("GroupInterface.delete_item is not implemented")
+    def remove_item(self, item: ItemInterface) -> None:
+        raise NotImplementedError("GroupInterface.delete_item is not implemented")
 
-
-class GroupInterfaceInternal:
-
-    def _set_database(self, database: "DatabaseInterface") -> None:
-        raise NotImpelementedErr("GroupInterfaceInternal._set_database is not implemented")
+    def _set_database(self, database: DatabaseInterface) -> None:
+        raise NotImplementedError("GroupInterface._set_database is not implemented")
 
 
 class DatabaseError(Exception):
     ...
 
 
-class _BaseGroup(GroupInterface, GroupInterfaceInternal):
+class _BaseGroup(GroupInterface):
 
-    def __init__(self, name: str, type_: Type, item_type: "ItemInterface", items: typing.List["ItemInterface"]):
-        super(GroupInterface, self).__init__()
-        super(GroupInterfaceInternal, self).__init__()
+    def __init__(self, name: str, type_: Type, item_type: ItemInterface, items: typing.List[ItemInterface]):
+        super().__init__()
         self._database = None 
         self._name = name
         self._type = type_
@@ -63,7 +60,7 @@ class _BaseGroup(GroupInterface, GroupInterfaceInternal):
         for item in items:
             self.add_item(item)
 
-    def database(self) -> "DatabaseInterface":
+    def database(self) -> DatabaseInterface:
         return self._database
 
     def name(self, new_name: str = None) -> str | None:
@@ -86,13 +83,13 @@ class _BaseGroup(GroupInterface, GroupInterfaceInternal):
     def type(self) -> Type:
         return self._type
 
-    def item(self, pos: int) -> "ItemInterface":
+    def item(self, pos: int) -> ItemInterface:
         return self._items[pos]
 
-    def items(self) -> typing.List["ItemInterface"]:
+    def items(self) -> typing.List[ItemInterface]:
         return self._items
 
-    def add_item(self, item: "ItemInterface") -> None:
+    def add_item(self, item: ItemInterface) -> None:
         self._check_item_type(item)
         if item.group() is None:
             item._set_group(self)
@@ -100,7 +97,7 @@ class _BaseGroup(GroupInterface, GroupInterfaceInternal):
         self._items.append(item)
         self._modify()
 
-    def remove_item(self, item: "ItemInterface") -> None:
+    def remove_item(self, item: ItemInterface) -> None:
         self._check_item_type(item)
         self.items().remove(item)
         self._modify()
@@ -117,13 +114,13 @@ class _BaseGroup(GroupInterface, GroupInterfaceInternal):
         del self.database()._groups[self.name()]
         self._modify()
 
-    def _set_database(self, database: "DatabaseInterface") -> None:
+    def _set_database(self, database: DatabaseInterface) -> None:
         if self.database() is not None:
             raise DatabaseError("database already setted")
 
         self._database = database
 
-    def _check_item_type(self, item: "ItemInterface") -> None:
+    def _check_item_type(self, item: ItemInterface) -> None:
         if not isinstance(item, self._item_type):
             raise TypeError(f"invalid item type: {type(item)}")
 

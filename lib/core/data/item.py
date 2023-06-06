@@ -25,14 +25,11 @@ class ItemInterface(QMetaType):
     def delete(self) -> None:
         raise NotImpelementedErr("ItemInterface.delete is not implemented")
 
-
-class ItemInterfaceInternal:
-
     def _set_group(self, group: "GroupInterface") -> None:
         raise NotImpelementedErr("ItemInterfaceInternal._set_group is not implemented")
 
     def _set_id(self, id: int) -> None:
-        raise NotImpelementedErr("ItemInterfaceInternal._set_id is not implemented")
+        raise NotImpelementedErr("ItemInterface._set_id is not implemented")
 
 
 class GroupError(Exception):
@@ -43,11 +40,10 @@ class IDError(Exception):
     ...
 
 
-class _BaseItem(ItemInterface, ItemInterfaceInternal):
+class _BaseItem(ItemInterface):
     
     def __init__(self, required_keys: typing.List[str], keys: typing.Dict[str, typing.Callable], data: typing.Dict[str, str]):
-        super(ItemInterface, self).__init__()
-        super(ItemInterfaceInternal, self).__init__()
+        super().__init__()
         self._group = None
         self._id = NO_ID
         self._keys = keys

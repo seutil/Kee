@@ -9,6 +9,7 @@ import lib.core.data.item as libitem
 import lib.core.data.factory as factory
 from .database import DatabaseInterface, ClosedError, Status, SALT_LENGTH
 from .data.group import GroupInterface
+from .data.item import ItemInterface
 
 from lib.crypto import generate
 from lib.crypto import cipher as libcipher
@@ -272,7 +273,7 @@ class _ModifiedState(_OpenedState):
             VALUES (?, ?)
         """, [group.name(), group.type().value])
 
-    def _save_item(self, encrypt_func: typing.Callable[[str], bytes], item: "ItemInterface") -> None:
+    def _save_item(self, encrypt_func: typing.Callable[[str], bytes], item: ItemInterface) -> None:
         data = encrypt_func(json.dumps(item.data()))
         if item._id == libitem.NO_ID:
             res = self._database._cursor.execute("""

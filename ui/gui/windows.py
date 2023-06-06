@@ -196,7 +196,7 @@ class MainWindow(QMainWindow):
 
     @pyqtSlot(DatabaseInterface)
     def __unlockDatabase(self, database: DatabaseInterface) -> None:
-        master_key = QInputDialog.getText(self, "Datbase Opening...", "Master Key: ", QLineEdit.Password)[0]
+        master_key = QInputDialog.getText(self, "Database Opening...", "Master Key: ", QLineEdit.Password)[0]
         if not master_key:
             return
 

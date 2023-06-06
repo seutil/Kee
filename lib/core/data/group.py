@@ -72,8 +72,14 @@ class _BaseGroup(GroupInterface, GroupInterfaceInternal):
         elif new_name == self._name:
             return
 
-        cur = self.database()._cursor
-        cur.execute("UPDATE `group` SET name = ? WHERE name = ?", [new_name, self._name])
+        if self._database is not None:
+            self._database._cursor.execute("""
+                UPDATE `group`
+                SET name = ?
+                WHERE name = ?
+            """, [new_name, self._name])
+            self._database._groups[new_name] = self._database._groups.pop(self._name)
+
         self._name = new_name
         self._modify()
 

@@ -12,6 +12,7 @@ class _DatabaseStandardItem(QStandardItem):
     def __init__(self, database: DatabaseInterface, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._database = database
+        self._loaded = 0
 
     def data(self, role: Qt.ItemDataRole) -> QVariant:
         if role == Qt.DisplayRole:
@@ -41,10 +42,15 @@ class _DatabaseStandardItem(QStandardItem):
         return super().flags() | Qt.ItemIsEditable
 
     def _updateChilds(self) -> None:
-        if self._database.status() != Status.CLOSED and not self.hasChildren():
-            for group in self._database.groups():
-                self.appendRow(_GroupAbstractItem(group))
-        
+        if self._database.status() != Status.CLOSED:
+            if self._loaded == len(self._database.groups()):
+                return
+
+            for group in self._database.groups()[self._loaded:]:
+                self.appendRow(_GroupStandardItem(group))
+
+            self._loaded = len(self._database.groups())
+
         if self._database.status() == Status.CLOSED and self.hasChildren():
             self.removeRows(0, self.rowCount())
 
@@ -64,12 +70,12 @@ class _GroupStandardItem(QStandardItem):
             if t == Type.PASSWORD:
                 return QIcon(":/icons/key")
             elif t == Type.CARD:
-                return QIcon(":/icons/credit-card")
+                return QIcon(":/icons/card")
             elif t == Type.IDENTITY:
                 return QIcon(":/icons/id-card")
 
         if role == Qt.EditRole:
-            self._group.name()
+            return self._group.name()
 
         return QVariant()
 

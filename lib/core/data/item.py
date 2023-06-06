@@ -80,16 +80,14 @@ class _BaseItem(ItemInterface, ItemInterfaceInternal):
     def delete(self) -> None:
         if self._id == NO_ID:
             raise IDError("id has not been specified")
-        elif not self.group():
-            raise GroupError("group has not been setted")
+        elif not (self.group() and self.group().database()):
+            raise GroupError("group or database has not been setted")
 
-        con = self.group().database()._connection
-        sql = con.cursor()
-        sql.execute("""
+        cur = self.group().database()._cursor
+        cur.execute("""
             DELETE FROM item
             WHERE id = ?
-        """, self._id)
-        con.commit()
+        """, [self._id])
 
     def _set_group(self, group: "GroupInterface") -> None:
         if self.group():

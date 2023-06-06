@@ -1,5 +1,4 @@
 
-import sqlite3
 import typing
 from enum import Enum
 
@@ -73,11 +72,8 @@ class _BaseGroup(GroupInterface, GroupInterfaceInternal):
         elif new_name == self._name:
             return
 
-        con = sqlite3.connect(self.database().location())
-        cur = con.cursor()
+        cur = self.database()._cursor
         cur.execute("UPDATE `group` SET name = ? WHERE name = ?", [new_name, self._name])
-        con.commit()
-        con.close()
         self._name = new_name
         self._modify()
 
@@ -107,14 +103,11 @@ class _BaseGroup(GroupInterface, GroupInterfaceInternal):
         if not self.database():
             raise DatabaseError("database is not setted")
 
-        con = sqlite3.connect(self.database().location())
-        cur = con.cursor()
+        cur = self.database()._cursor
         cur.execute("""
             DELETE FROM `group`
             WHERE name = ?
         """, [self.name()])
-        con.commit()
-        con.close()
         del self.database()._groups[self.name()]
         self._modify()
 

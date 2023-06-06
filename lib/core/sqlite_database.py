@@ -50,6 +50,10 @@ class _ClosedState(_BaseState):
         raise ClosedError("database closed")
 
     def open(self, master_key: str) -> None:
+        if self._database._connection is None:
+            self._database._connection = sqlite3.connect(self._database.location())
+            self._database._cursor = self._database._connection.cursor()
+
         if not self._valid_master_key(master_key):
             raise ValueError("incorrect master key")
 
@@ -57,18 +61,15 @@ class _ClosedState(_BaseState):
             self._database._set_state(self._database._opened_state)
             return
 
-        con = sqlite3.connect(self._database.location())
-        cur = con.cursor()
         dec = self._decrypt_func(master_key)
-        for group in self._load_groups(cur):
-            self._load_items(cur, dec, group)
+        for group in self._load_groups():
+            self._load_items(dec, group)
             self._database._groups[group.name()] = group
             group._set_database(self._database)
 
         self._loaded_previosly = True
         self._database._master_key = master_key
         self._database._set_state(self._database._opened_state)
-        con.close()
 
     def close(self) -> None:
         ...
@@ -113,14 +114,16 @@ class _ClosedState(_BaseState):
 
         return decrypt
 
-    def _load_groups(self, cur) -> GroupInterface:
-        res = cur.execute("SELECT name, type FROM `group`").fetchall()
+    def _load_groups(self) -> GroupInterface:
+        res = self._database._cursor.execute("SELECT name, type FROM `group`").fetchall()
         for r in res: 
             group = factory.group_from_type(r[1])(name=r[0], items=[])
             yield group
 
-    def _load_items(self, cur, dec: typing.Callable[[bytes], str], group: GroupInterface) -> None:
-        res = cur.execute("SELECT id, data FROM item WHERE group_name = ?", [group.name()]).fetchall()
+    def _load_items(self, dec: typing.Callable[[bytes], str], group: GroupInterface) -> None:
+        res = self._database._cursor.execute("""
+            SELECT id, data FROM item WHERE group_name = ?
+        """, [group.name()]).fetchall()
         for i in res:
             item = factory.item_from_type(group.type())(json.loads(dec(i[1])))
             item._set_id(res[0])
@@ -149,7 +152,6 @@ class _OpenedState(_BaseState):
 
         self._database._master_key = new_master_key
         self._database._set_state(self._database._modified_state)
-
 
     def hasher(self, new_hasher: libhasher.HashInterface = None) -> libhasher.HashInterface | None:
         if new_hasher is None:
@@ -182,6 +184,9 @@ class _OpenedState(_BaseState):
         ...
 
     def close(self) -> None:
+        self._database._connection.close()
+        self._database._connection = None
+        self._database._cursor = None
         self._database._set_state(self._database._closed_state)
 
     def save(self) -> None:
@@ -202,6 +207,7 @@ class _OpenedState(_BaseState):
         self._database._set_state(self._database._modified_state)
 
     def remove(self) -> None:
+        self.close()
         os.remove(self._database.location())
 
     def remove_group(self, group: "GroupInterface") -> None:
@@ -218,22 +224,19 @@ class _ModifiedState(_OpenedState):
         return Status.MODIFIED
 
     def save(self) -> None:
-        con = sqlite3.connect(self._database.location())
-        cur = con.cursor()
-        self._save_meta(cur)
-        encrypt = self._encrypt_func(cur)
+        self._save_meta()
+        encrypt = self._encrypt_func()
         for group in self._database.groups():
-            self._save_group(cur, group)
+            self._save_group(group)
             for item in group.items():
-                self._save_item(cur, encrypt, item)
+                self._save_item(encrypt, item)
 
-        con.commit()
+        self._database._connection.commit()
         self._database._set_state(self._database._opened_state)
-        con.close()
 
-    def _save_meta(self, cur) -> None:
-        cur.execute("DELETE FROM meta") # clear previos meta data
-        cur.execute("""
+    def _save_meta(self) -> None:
+        self._database._cursor.execute("DELETE FROM meta") # clear previos meta data
+        self._database._cursor.execute("""
             INSERT INTO meta(name, master_key_hash, hash_salt, cipher_salt, hasher_id, cipher_id, encoder_id)
             VALUES (?, ?, ?, ?, ?, ?, ?)
         """, [
@@ -252,7 +255,7 @@ class _ModifiedState(_OpenedState):
         hs = self._database._meta["hash_salt"]
         return e.encode(h.hash(self._database._master_key.encode(), hs))
 
-    def _encrypt_func(self, cur) -> typing.Callable[[str], bytes]:
+    def _encrypt_func(self) -> typing.Callable[[str], bytes]:
         c = self._database._meta["cipher"]
         e = self._database._meta["encoder"]
         cs = self._database._meta["cipher_salt"]
@@ -263,22 +266,22 @@ class _ModifiedState(_OpenedState):
 
         return encrypt
 
-    def _save_group(self, cur, group: GroupInterface) -> None:
-        cur.execute("""
+    def _save_group(self, group: GroupInterface) -> None:
+        self._database._cursor.execute("""
             INSERT OR IGNORE INTO `group`
             VALUES (?, ?)
         """, [group.name(), group.type().value])
 
-    def _save_item(self, cur, encrypt_func: typing.Callable[[str], bytes], item: "ItemInterface") -> None:
+    def _save_item(self, encrypt_func: typing.Callable[[str], bytes], item: "ItemInterface") -> None:
         data = encrypt_func(json.dumps(item.data()))
         if item._id == libitem.NO_ID:
-            res = cur.execute("""
+            res = self._database._cursor.execute("""
                 INSERT INTO item(group_name, data)
                 VALUES (?, ?)
             """, [item.group().name(), data])
             item._set_id(res.lastrowid)
         else:
-            cur.execute("""
+            self._database._cursor.execute("""
                 UPDATE item
                 SET data = ?
                 WHERE id = ?
@@ -328,13 +331,14 @@ class SQLiteDatabase(DatabaseInterface):
         con.commit()
         con.close()
         db = SQLiteDatabase(location)
-        db._master_key = master_key
-        db._set_state(db._opened_state)
+        db.open(master_key)
         return db
 
     def __init__(self, location: str):
         super().__init__()
         self._location = location
+        self._connection = sqlite3.connect(self._location)
+        self._cursor = self._connection.cursor()
         self._master_key = None
         self._groups = {}
         
@@ -397,9 +401,7 @@ class SQLiteDatabase(DatabaseInterface):
         self._current_state = state
 
     def _load_meta(self) -> None:
-        con = sqlite3.connect(self.location())
-        cur = con.cursor()
-        res = cur.execute("""
+        res = self._cursor.execute("""
             SELECT name, master_key_hash, hash_salt, cipher_salt, hasher_id, cipher_id, encoder_id
             FROM meta
         """).fetchone()
@@ -412,7 +414,6 @@ class SQLiteDatabase(DatabaseInterface):
             "cipher": libcipher.from_id(res[5]),
             "encoder": libencoder.from_id(res[6])
         }
-        con.close()
 
     def __hash__(self) -> hash:
         return hash(self.location())

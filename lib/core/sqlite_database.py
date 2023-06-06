@@ -189,7 +189,7 @@ class _OpenedState(_BaseState):
         return self._database._groups[name]
 
     def groups(self) -> typing.List["GroupInterface"]:
-        return self._database._groups.values()
+        return list(self._database._groups.values())
 
     def add_group(self, group: "GroupInterface") -> None:
         if group.name() in self._database.groups():

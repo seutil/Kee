@@ -80,7 +80,7 @@ class _GroupStandardItem(QStandardItem):
         return QVariant()
 
     def setData(self, value: QVariant, role: Qt.ItemDataRole) -> None:
-        if role != Qt.EditRole:
+        if role != Qt.EditRole or not value:
             return
 
         self._group.name(value)

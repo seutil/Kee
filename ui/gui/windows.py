@@ -57,7 +57,7 @@ class MainWindow(QMainWindow):
             "add-group-passwords": QAction("Passwords", self, triggered=lambda: self.__addGroup(Type.PASSWORD)),
             "add-group-cards": QAction("Cards", self, triggered=lambda: self.__addGroup(Type.CARD)),
             "add-group-identities": QAction("Identities", self, triggered=lambda: self.__addGroup(Type.IDENTITY)),
-            "rename-group": QAction("Rename...", self),
+            "rename-group": QAction("Rename...", self, triggered=lambda: self.__renameGroup()),
             "remove-group": QAction("Remove", self, triggered=self.__removeGroup),
             "clear-group": QAction("Clear", self),
 
@@ -178,6 +178,15 @@ class MainWindow(QMainWindow):
             return
 
         self.__tree_databases.removeGroup(self.__group)
+
+    @pyqtSlot()
+    def __renameGroup(self) -> None:
+        new_name = QInputDialog.getText(self, "Raname Group", "New group name: ", QLineEdit.Normal)[0]
+        if not new_name:
+            QMessageBox.critical(self, "Raname Group", "Empty group name is not allowd")
+            return
+
+        self.__group.name(new_name)
 
     @pyqtSlot(DatabaseInterface)
     def __setCurrentDatabase(self, database: DatabaseInterface) -> None:

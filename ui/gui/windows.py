@@ -7,10 +7,11 @@ import lib.crypto.encoder as encoder
 import lib.crypto.hasher as hasher
 import lib.crypto.cipher as cipher
 import lib.crypto.generate as generate
+import lib.core.data.factory as factory
 from lib.core.config import Config
 from lib.core.database import Status, DatabaseInterface
 from lib.core.sqlite_database import SQLiteDatabase
-from lib.core.data.group import GroupInterface
+from lib.core.data.group import Type, GroupInterface
 from . import line_edits, dialogs, trees, tables
 
 
@@ -53,9 +54,9 @@ class MainWindow(QMainWindow):
             "import-group-json": QAction("JSON", self),
             "export-group-csv": QAction("CSV", self),
             "export-group-json": QAction("JSON", self),
-            "add-group-passwords": QAction("Passwords", self),
-            "add-group-cards": QAction("Cards", self),
-            "add-group-identities": QAction("Identities", self),
+            "add-group-passwords": QAction("Passwords", self, triggered=lambda: self.__addGroup(Type.PASSWORD)),
+            "add-group-cards": QAction("Cards", self, triggered=lambda: self.__addGroup(Type.CARD)),
+            "add-group-identities": QAction("Identities", self, triggered=lambda: self.__addGroup(Type.IDENTITY)),
             "rename-group": QAction("Rename...", self),
             "remove-group": QAction("Remove", self),
             "clear-group": QAction("Clear", self),
@@ -197,7 +198,7 @@ class MainWindow(QMainWindow):
             "rename-group"
         ]
         for action in actions:
-            self._actions[action].setEnabled(group is not None)
+            self.__actions[action].setEnabled(group is not None)
 
     @pyqtSlot(DatabaseInterface)
     def __unlockDatabase(self, database: DatabaseInterface) -> None:
@@ -210,6 +211,20 @@ class MainWindow(QMainWindow):
             self.__setCurrentDatabase(database)
         except ValueError:
             QMessageBox.critical(self, "Database Opening...", "Specified master key is incorrect")
+
+    @pyqtSlot(Type)
+    def __addGroup(self, group_type: Type) -> None:
+        name = QInputDialog.getText(self, "New Group", "Enter group name: ", QLineEdit.Normal)[0]
+        if not name:
+            QMessageBox.critical(self, "New Group", "Empty group name is not allowed")
+            return
+
+        group = factory.group_from_type(group_type.value)
+        if group is None:
+            QMessageBox.critical(self, "New Group", "Internal error\nUnknown group type")
+            return
+
+        self.__database.add_group(group(name=name, items=[]))
 
 
 class NewDatabaseWindow(QDialog):

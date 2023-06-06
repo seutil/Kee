@@ -30,6 +30,7 @@ class MainWindow(QMainWindow):
         self.__initActions()
         self.__initUI()
         self.__initMenu()
+        self.__initConnections()
         self.__setCurrentDatabase(None)
         self.__setCurrentGroup(None)
     
@@ -38,14 +39,14 @@ class MainWindow(QMainWindow):
             "exit": QAction("Exit", self, shortcut=QKeySequence("Ctrl+Q"), triggered=QApplication.exit),
 
             # database actions
-            "new-database": QAction("New", self, shortcut=QKeySequence("Ctrl+N"), triggered=self.__newDatabase),
-            "open-database": QAction("Open", self, shortcut=QKeySequence("Ctrl+O"), triggered=self.__openDatabase),
-            "close-database": QAction("Close", self, shortcut=QKeySequence("Ctrl+D"), triggered=self.__closeDatabase),
-            "remove-database": QAction("Remove", self, shortcut=QKeySequence("Ctrl+R"), triggered=self.__removeDatabase),
-            "save-database": QAction("Save", self, shortcut=QKeySequence("Ctrl+S"), triggered=lambda: self.__database.save()),
+            "new-database": QAction("New", self, shortcut=QKeySequence("Ctrl+N")),
+            "open-database": QAction("Open", self, shortcut=QKeySequence("Ctrl+O")),
+            "close-database": QAction("Close", self, shortcut=QKeySequence("Ctrl+D")),
+            "remove-database": QAction("Remove", self, shortcut=QKeySequence("Ctrl+R")),
+            "save-database": QAction("Save", self, shortcut=QKeySequence("Ctrl+S")),
             "save-database-as": QAction("Save As...", self, shortcut=QKeySequence("Ctrl+Shift+S")),
-            "database-settings": QAction("Database Settings...", self, triggered=lambda: DatabaseSettingsWindow(self.__database).exec_()),
-            "change-master-key": QAction("Change Master Key...", self, triggered=self.__changeMasterKey),
+            "database-settings": QAction("Database Settings...", self),
+            "change-master-key": QAction("Change Master Key...", self),
             "export-database": QAction("Export...", self),
             "import-database": QAction("Import...", self),
             
@@ -54,12 +55,12 @@ class MainWindow(QMainWindow):
             "import-group-json": QAction("JSON", self),
             "export-group-csv": QAction("CSV", self),
             "export-group-json": QAction("JSON", self),
-            "add-group-passwords": QAction("Passwords", self, triggered=lambda: self.__addGroup(Type.PASSWORD)),
-            "add-group-cards": QAction("Cards", self, triggered=lambda: self.__addGroup(Type.CARD)),
-            "add-group-identities": QAction("Identities", self, triggered=lambda: self.__addGroup(Type.IDENTITY)),
-            "rename-group": QAction("Rename...", self, triggered=lambda: self.__renameGroup()),
-            "remove-group": QAction("Remove", self, triggered=self.__removeGroup),
-            "clear-group": QAction("Clear", self, triggered=self.__clearGroup),
+            "add-group-passwords": QAction("Passwords", self),
+            "add-group-cards": QAction("Cards", self),
+            "add-group-identities": QAction("Identities", self),
+            "rename-group": QAction("Rename...", self),
+            "remove-group": QAction("Remove", self),
+            "clear-group": QAction("Clear", self),
 
             # item actions
             "add-item": QAction("Add", self),
@@ -110,15 +111,33 @@ class MainWindow(QMainWindow):
         for db in Config().databases():
             self.__tree_databases.addDatabase(db)
 
-        self.__tree_databases.databaseOpening.connect(self.__unlockDatabase)
-        self.__tree_databases.databaseSelected.connect(self.__setCurrentDatabase)
-        self.__tree_databases.groupSelected.connect(self.__setCurrentGroup)
-        
         wgt_main = QSplitter()
         wgt_main.addWidget(self.__tree_databases)
         wgt_main.addWidget(self.__tbl_group)
         wgt_main.setSizes([200, 550])
         self.setCentralWidget(wgt_main)
+
+    def __initConnections(self) -> None:
+        self.__actions["exit"].triggered.connect(QApplication.exit)
+        self.__actions["new-database"].triggered.connect(self.__newDatabase)
+        self.__actions["open-database"].triggered.connect(self.__openDatabase)
+        self.__actions["close-database"].triggered.connect(self.__closeDatabase)
+        self.__actions["remove-database"].triggered.connect(self.__removeDatabase)
+        self.__actions["remove-database"].triggered.connect(self.__tree_databases.viewport().update)
+        self.__actions["save-database"].triggered.connect(lambda: self.__database.save())
+        self.__actions["save-database"].triggered.connect(self.__tree_databases.viewport().update)
+        self.__actions["database-settings"].triggered.connect(lambda: DatabaseSettingsWindow(self.__database).exec_())
+        self.__actions["change-master-key"].triggered.connect(self.__changeMasterKey)
+        self.__actions["add-group-passwords"].triggered.connect(lambda: self.__addGroup(Type.PASSWORD))
+        self.__actions["add-group-cards"].triggered.connect(lambda: self.__addGroup(Type.CARD))
+        self.__actions["add-group-identities"].triggered.connect(lambda: self.__addGroup(Type.IDENTITY))
+        self.__actions["rename-group"].triggered.connect(self.__renameGroup)
+        self.__actions["remove-group"].triggered.connect(self.__removeGroup)
+        self.__actions["clear-group"].triggered.connect(self.__clearGroup)
+
+        self.__tree_databases.databaseOpening.connect(self.__unlockDatabase)
+        self.__tree_databases.databaseSelected.connect(self.__setCurrentDatabase)
+        self.__tree_databases.groupSelected.connect(self.__setCurrentGroup)
 
     @pyqtSlot()
     def __newDatabase(self) -> None:

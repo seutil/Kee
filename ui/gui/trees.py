@@ -128,6 +128,14 @@ class DatabasesTree(QTreeView):
         del self._databases[database]
         self.__emitSignals(None if not self._databases else self.model().item(0))
 
+    @pyqtSlot(GroupInterface)
+    def removeGroup(self, group: GroupInterface) -> None:
+        db_item = self._databases[group.database()]
+        grp_ind = group.database().groups().index(group)
+        self.model().removeRow(grp_ind, db_item.index())
+        group.remove()
+        self.__emitSignals(db_item if grp_ind == 0 else db_item.child(grp_ind))
+
     def mousePressEvent(self, event: QMouseEvent) -> None:
         index = self.indexAt(event.pos())
         if not index.isValid():

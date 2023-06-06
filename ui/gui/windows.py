@@ -58,7 +58,7 @@ class MainWindow(QMainWindow):
             "add-group-cards": QAction("Cards", self, triggered=lambda: self.__addGroup(Type.CARD)),
             "add-group-identities": QAction("Identities", self, triggered=lambda: self.__addGroup(Type.IDENTITY)),
             "rename-group": QAction("Rename...", self),
-            "remove-group": QAction("Remove", self),
+            "remove-group": QAction("Remove", self, triggered=self.__removeGroup),
             "clear-group": QAction("Clear", self),
 
             # item actions
@@ -166,6 +166,18 @@ class MainWindow(QMainWindow):
             return
 
         self.__database.master_key(master_key)
+
+    @pyqtSlot()
+    def __removeGroup(self) -> None:
+        remove = QMessageBox.question(
+            self,
+            "Remove Group",
+            f"Are you shure you want remove group \"{self.__group.name()}\""
+        )
+        if not remove:
+            return
+
+        self.__tree_databases.removeGroup(self.__group)
 
     @pyqtSlot(DatabaseInterface)
     def __setCurrentDatabase(self, database: DatabaseInterface) -> None:

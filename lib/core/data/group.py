@@ -1,4 +1,5 @@
 
+import sqlite3
 import typing
 from enum import Enum
 
@@ -24,8 +25,8 @@ class GroupInterface(QMetaType):
     def type(self) -> Type:
         raise NotImpelementedErr("GroupInterface.type is not implemented")
 
-    def delete(self) -> None:
-        raise NotImpelementedErr("GroupInterface.delete is not implemented")
+    def remove(self) -> None:
+        raise NotImpelementedErr("GroupInterface.remove is not implemented")
 
     def item(self, pos: int) -> "ItemInterface":
         raise NotImpelementedErr("GroupInterface.item is not implemented")
@@ -38,9 +39,6 @@ class GroupInterface(QMetaType):
 
     def remove_item(self, item: "ItemInterface") -> None:
         raise NotImpelementedErr("GroupInterface.delete_item is not implemented")
-
-    def delete(self) -> None:
-        raise NotImpelementedErr("GroupInterface.delete is not implemented")
 
 
 class GroupInterfaceInternal:
@@ -97,17 +95,18 @@ class _BaseGroup(GroupInterface, GroupInterfaceInternal):
         self.items().remove(item)
         self._modify()
 
-    def delete(self) -> None:
+    def remove(self) -> None:
         if not self.database():
             raise DatabaseError("database is not setted")
 
-        con = self.database()._connection
+        con = sqlite3.connect(self.database().location())
         cur = con.cursor()
         cur.execute("""
             DELETE FROM `group`
             WHERE name = ?
-        """, self.name())
+        """, [self.name()])
         con.commit()
+        con.close()
         del self.database()._groups[self.name()]
         self._modify()
 

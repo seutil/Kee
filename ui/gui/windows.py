@@ -215,8 +215,6 @@ class MainWindow(QMainWindow):
             "add-group-cards",
             "add-group-passwords",
             "add-group-identities",
-            "export-group-csv",
-            "export-group-json",
             "import-group-csv",
             "import-group-json",
         ]
@@ -230,6 +228,8 @@ class MainWindow(QMainWindow):
             "clear-group",
             "remove-group",
             "rename-group",
+            "export-group-csv",
+            "export-group-json",
         ]
         for action in actions:
             self.__actions[action].setEnabled(group is not None)

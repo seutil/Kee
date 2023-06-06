@@ -63,6 +63,7 @@ class _ClosedState(_BaseState):
         for group in self._load_groups(cur):
             self._load_items(cur, dec, group)
             self._database._groups[group.name()] = group
+            group._set_database(self._database)
 
         self._loaded_previosly = True
         self._database._master_key = master_key
@@ -115,7 +116,8 @@ class _ClosedState(_BaseState):
     def _load_groups(self, cur) -> GroupInterface:
         res = cur.execute("SELECT name, type FROM `group`").fetchall()
         for r in res: 
-            yield factory.group_from_type(r[1])(name=r[0], items=[])
+            group = factory.group_from_type(r[1])(name=r[0], items=[])
+            yield group
 
     def _load_items(self, cur, dec: typing.Callable[[bytes], str], group: GroupInterface) -> None:
         res = cur.execute("SELECT id, data FROM item WHERE group_name = ?", [group.name()]).fetchall()
@@ -195,6 +197,7 @@ class _OpenedState(_BaseState):
         if group.name() in self._database.groups():
             raise ValueError(f"Group with name {group.name()} already exist")
 
+        group._set_database(self._database)
         self._database._groups[group.name()] = group
         self._database._set_state(self._database._modified_state)
 

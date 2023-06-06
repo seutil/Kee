@@ -9,7 +9,7 @@
         <file alias="lock">icons/lock.png</file>
         <file alias="unlock">icons/unlock.png</file>
         <file alias="key">icons/key.png</file>
-        <file alias="credit-card">icons/credit-card.png</file>
+        <file alias="card">icons/card.png</file>
         <file alias="id-card">icons/id-card.png</file>
         <file alias="url">icons/url.png</file>
         <file alias="key-solid">icons/key-solid.png</file>

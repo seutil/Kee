@@ -193,6 +193,11 @@ class MainWindow(QMainWindow):
     @pyqtSlot(GroupInterface)
     def __setCurrentGroup(self, group: GroupInterface) -> None:
         self.__group = group
+        actions = [
+            "rename-group"
+        ]
+        for action in actions:
+            self._actions[action].setEnabled(group is not None)
 
     @pyqtSlot(DatabaseInterface)
     def __unlockDatabase(self, database: DatabaseInterface) -> None:

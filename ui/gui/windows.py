@@ -162,7 +162,7 @@ class MainWindow(QMainWindow):
 
         master_key = QInputDialog.getText(self, "Change Master Key", "New master key: ", QLineEdit.Password)[0]
         if not master_key:
-            QMessageBox.critical(self, "Change Master Key", "Empty master key is not allowd")
+            QMessageBox.critical(self, "Change Master Key", "Empty master key is not allowed")
             return
 
         self.__database.master_key(master_key)
@@ -174,7 +174,7 @@ class MainWindow(QMainWindow):
             "Remove Group",
             f"Are you shure you want remove group \"{self.__group.name()}\""
         )
-        if not remove:
+        if remove == QMessageBox.No:
             return
 
         self.__tree_databases.removeGroup(self.__group)

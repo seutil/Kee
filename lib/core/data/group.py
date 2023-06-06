@@ -143,5 +143,5 @@ class CardsGroup(_BaseGroup):
 class IdentitiesGroup(_BaseGroup):
 
     def __init__(self, name: str, items: typing.List[IdentityItem]):
-        super().__init__(name, type.IDENTITY, IdentityItem, items)
+        super().__init__(name, Type.IDENTITY, IdentityItem, items)
 

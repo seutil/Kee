@@ -59,7 +59,7 @@ class MainWindow(QMainWindow):
             "add-group-identities": QAction("Identities", self, triggered=lambda: self.__addGroup(Type.IDENTITY)),
             "rename-group": QAction("Rename...", self, triggered=lambda: self.__renameGroup()),
             "remove-group": QAction("Remove", self, triggered=self.__removeGroup),
-            "clear-group": QAction("Clear", self),
+            "clear-group": QAction("Clear", self, triggered=self.__clearGroup),
 
             # item actions
             "add-item": QAction("Add", self),
@@ -187,6 +187,19 @@ class MainWindow(QMainWindow):
             return
 
         self.__group.name(new_name)
+
+    @pyqtSlot()
+    def __clearGroup(self) -> None:
+        clear = QMessageBox.question(
+            self,
+            "Clear Group",
+            f"Are you shure you want clear group \"{self.__group.name()}\""
+        )
+        if clear == QMessageBox.No:
+            return
+
+        for item in self.__group.items():
+            item.delete()
 
     @pyqtSlot(DatabaseInterface)
     def __setCurrentDatabase(self, database: DatabaseInterface) -> None:

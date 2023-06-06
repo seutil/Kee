@@ -86,7 +86,7 @@ class _BaseGroup(GroupInterface, GroupInterfaceInternal):
 
     def add_item(self, item: "ItemInterface") -> None:
         self._check_item_type(item)
-        if not item.group():
+        if item.group() is None:
             item._set_group(self)
 
         self._items.append(item)
@@ -112,7 +112,7 @@ class _BaseGroup(GroupInterface, GroupInterfaceInternal):
         self._modify()
 
     def _set_database(self, database: "DatabaseInterface") -> None:
-        if self.database():
+        if self.database() is not None:
             raise DatabaseError("database already setted")
 
         self._database = database

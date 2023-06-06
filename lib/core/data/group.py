@@ -70,8 +70,16 @@ class _BaseGroup(GroupInterface, GroupInterfaceInternal):
     def name(self, new_name: str = None) -> str | None:
         if new_name is None:
             return self._name
+        elif new_name == self._name:
+            return
 
+        con = sqlite3.connect(self.database().location())
+        cur = con.cursor()
+        cur.execute("UPDATE `group` SET name = ? WHERE name = ?", [new_name, self._name])
+        con.commit()
+        con.close()
         self._name = new_name
+        self._modify()
 
     def type(self) -> Type:
         return self._type

@@ -86,12 +86,12 @@ class MainWindow(QMainWindow):
 
         group_menu = self.menuBar().addMenu("Group")
         group_add = group_menu.addMenu("Add")
+        group_menu.addSeparator()
         group_add.addAction(self.__actions["add-group-passwords"])
         group_add.addAction(self.__actions["add-group-cards"])
         group_add.addAction(self.__actions["add-group-identities"])
         group_menu.addAction(self.__actions["remove-group"])
         group_menu.addAction(self.__actions["clear-group"])
-        group_menu.addSeparator()
         group_menu.addAction(self.__actions["rename-group"])
         group_menu.addSeparator()
         group_import = group_menu.addMenu("Import")
@@ -206,8 +206,6 @@ class MainWindow(QMainWindow):
             "export-group-json",
             "import-group-csv",
             "import-group-json",
-            "clear-group",
-            "remove-group"
         ]
         for action in actions:
             self.__actions[action].setEnabled(database is not None)
@@ -216,7 +214,9 @@ class MainWindow(QMainWindow):
     def __setCurrentGroup(self, group: GroupInterface) -> None:
         self.__group = group
         actions = [
-            "rename-group"
+            "clear-group",
+            "remove-group",
+            "rename-group",
         ]
         for action in actions:
             self.__actions[action].setEnabled(group is not None)

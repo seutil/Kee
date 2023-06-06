@@ -130,6 +130,8 @@ class _OpenedState(_BaseState):
     def name(self, new_name: str = None) -> str | None:
         if new_name is None:
             return self._database._meta["name"]
+        elif new_name == self._database._meta["name"]:
+            return
 
         self._database._meta["name"] = new_name
         self._database._set_state(self._database._modified_state)
@@ -150,6 +152,8 @@ class _OpenedState(_BaseState):
     def hasher(self, new_hasher: libhasher.HashInterface = None) -> libhasher.HashInterface | None:
         if new_hasher is None:
             return self._database._meta["hasher"]
+        elif new_hasher == self._database._meta["hasher"]:
+            return
 
         self._database._meta["hasher"] = new_hasher
         self._database._set_state(self._database._modified_state)
@@ -157,6 +161,8 @@ class _OpenedState(_BaseState):
     def cipher(self, new_cipher: libcipher.CipherInterface = None) -> libcipher.CipherInterface | None:
         if new_cipher is None:
             return self._database._meta["cipher"]
+        elif new_cipher == self._database._meta["cipher"]:
+            return
 
         self._database._meta["cipher"] = new_cipher
         self._database._set_state(self._database._modified_state)
@@ -164,6 +170,8 @@ class _OpenedState(_BaseState):
     def encoder(self, new_encoder: libencoder.EncoderInterface = None) -> libencoder.EncoderInterface | None:
         if new_encoder is None:
             return self._database._meta["encoder"]
+        elif new_encoder == self._database._meta["encoder"]:
+            return
 
         self._database._meta["encoder"] = new_encoder
         self._database._set_state(self._database._modified_state)

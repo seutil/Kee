@@ -12,6 +12,7 @@ from lib.core.config import Config
 from lib.core.database import Status, DatabaseInterface
 from lib.core.sqlite_database import SQLiteDatabase
 from lib.core.data.group import Type, GroupInterface
+from lib.core.data.item import ItemInterface
 from . import line_edits, dialogs, trees, tables
 
 
@@ -33,6 +34,7 @@ class MainWindow(QMainWindow):
         self.__initConnections()
         self.__setCurrentDatabase(None)
         self.__setCurrentGroup(None)
+        self.__setCurrentItem(None)
     
     def __initActions(self) -> None:
         self.__actions = {
@@ -63,9 +65,23 @@ class MainWindow(QMainWindow):
             "clear-group": QAction("Clear", self),
 
             # item actions
-            "add-item": QAction("Add", self),
-            "remove-item": QAction("Remove", self),
-        }        
+            "add-item": QAction("Add", self, shortcut=QKeySequence("Ctrl+Shift+N")),
+            "remove-item": QAction("Remove", self, shortcut=QKeySequence("Delete")),
+            "edit-item": QAction("Edit", self, shortcut=QKeySequence("Ctrl+E")),
+
+            # item type specific
+            "password-copy-login": QAction("Copy Login", self),
+            "password-copy-password": QAction("Copy Password", self),
+            "password-open-url": QAction("Open URL..."),
+
+            "card-copy-number": QAction("Copy Number", self),
+            "card-copy-cvv": QAction("Copy CVV", self),
+            "card-copy-holder": QAction("Copy Holder", self),
+            "card-remove-expired": QAction("Remove Expired Cards", self),
+
+            "identity-copy-email": QAction("Copy Email", self),
+            "identity-copy-phone": QAction("Copy Phone", self),
+        }
 
     def __initMenu(self) -> None:
         database_menu = self.menuBar().addMenu("Database")
@@ -103,7 +119,19 @@ class MainWindow(QMainWindow):
         group_export.addAction(self.__actions["export-group-json"])
         group_menu.addSeparator()
 
-        group_item = self.menuBar().addMenu("Item")
+        menu_item = self.menuBar().addMenu("Item")
+        menu_item.addAction(self.__actions["add-item"])
+        menu_item.addAction(self.__actions["remove-item"])
+        menu_item.addAction(self.__actions["edit-item"])
+        self.__menu_password = menu_item.addMenu("Password")
+        self.__menu_password.addAction(self.__actions["password-copy-login"])
+        self.__menu_password.addAction(self.__actions["password-copy-password"])
+        self.__menu_password.addAction(self.__actions["password-open-url"])
+        self.__menu_card = menu_item.addMenu("Card")
+        self.__menu_card.addAction(self.__actions["card-copy-number"])
+        self.__menu_card.addAction(self.__actions["card-copy-cvv"])
+        self.__menu_card.addAction(self.__actions["card-copy-holder"])
+        self.__menu_card.addAction(self.__actions["card-remove-expired"])
 
     def __initUI(self) -> None:
         self.__tbl_group = tables.GroupTable()
@@ -249,9 +277,19 @@ class MainWindow(QMainWindow):
             "rename-group",
             "export-group-csv",
             "export-group-json",
+            "add-item"
         ]
         for action in actions:
             self.__actions[action].setEnabled(group is not None)
+
+    @pyqtSlot(ItemInterface)
+    def __setCurrentItem(self, item: ItemInterface) -> None:
+        self.__item = item
+        not_none = self.__item is not None 
+        self.__actions["remove-item"].setEnabled(not_none)
+        self.__actions["edit-item"].setEnabled(not_none)
+        self.__menu_password.setEnabled(not_none and itemitem.group().type() is Type.PASSWORD)
+        self.__menu_card.setEnabled(not_none and item.group().type() is Type.CARD)
 
     @pyqtSlot(DatabaseInterface)
     def __unlockDatabase(self, database: DatabaseInterface) -> None:

@@ -7,9 +7,6 @@ from PyQt5.QtWidgets import *
 from lib.core.data.group import Type, GroupInterface, PasswordsGroup, CardsGroup, IdentitiesGroup
 
 
-PASS_CHAR = QStyle.SH_LineEdit_PasswordCharacter
-
-
 class _PasswordsGroupModel(QAbstractTableModel):
 
     def __init__(self, group: PasswordsGroup, *args, **kwargs):
@@ -36,14 +33,20 @@ class _PasswordsGroupModel(QAbstractTableModel):
         return QVariant()
 
     def data(self, index: QModelIndex, role: Qt.ItemDataRole) -> QVariant:
-        if not index.isValid() or role != Qt.DisplayRole:
+        if not index.isValid():
             return QVariant()
 
         item = self.group.items()[index.row()]
-        if index.column() == 4:
-            return PASS_CHAR * len(item.entry("password"))
+        if role == Qt.DisplayRole:
+            if index.column() == 4:
+                return "*" * len(item.entry("password"))
 
-        return item.entry(self.headers[index.column()].lower())
+            return item.entry(self.headers[index.column()].lower())
+
+        if role == Qt.TextAlignmentRole and index.column() == 4:
+            return Qt.AlignCenter
+
+        return QVariant()
 
     def rowCount(self, index: QModelIndex) -> int:
         return len(self.group.items())
@@ -71,7 +74,10 @@ class _CardsGroupModel(QAbstractTableModel):
 
         if role == Qt.DisplayRole:
             data = self.group.items()[index.row()].entry(self.headers[index.column()].lower())
-            return PASS_CHAR * len(data) if index.column() == 3 else data
+            if index.column() == 3:
+                return "*" * len(data)
+            
+            return data
 
         if role == Qt.TextAlignmentRole and index.column() == 3:
             return Qt.AlignCenter

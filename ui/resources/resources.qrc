@@ -11,7 +11,9 @@
         <file alias="key">icons/key.png</file>
         <file alias="card">icons/card.png</file>
         <file alias="id-card">icons/id-card.png</file>
-        <file alias="url">icons/url.png</file>
+        <file alias="url">icons/link.png</file>
         <file alias="key-solid">icons/key-solid.png</file>
+        <file alias="user">icons/user.png</file>
+        <file alias="email">icons/email.png</file>
     </qresource>
 </RCC>

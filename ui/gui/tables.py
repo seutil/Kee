@@ -73,7 +73,7 @@ class _CardsGroupModel(QAbstractTableModel):
             return QVariant()
 
         if role == Qt.DisplayRole:
-            data = self.group.items[index.row()].entry(self.headers[index.column().lower()])
+            data = self.group.items()[index.row()].entry(self.headers[index.column()].lower())
             return PASS_CHAR * len(data) if index.column() == 3 else data
 
         if role == Qt.TextAlignmentRole and index.column() == 3:

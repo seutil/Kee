@@ -12,8 +12,8 @@ from lib.core.config import Config
 from lib.core.database import Status, DatabaseInterface
 from lib.core.sqlite_database import SQLiteDatabase
 from lib.core.data.group import Type, GroupInterface
-from lib.core.data.item import ItemInterface, PasswordItem
-from . import line_edits, dialogs, trees, tables
+from lib.core.data.item import ItemInterface, PasswordItem, CardItem
+from . import line_edits, dialogs, trees, tables, widgets
 
 
 DEFAULT_CIPHER = cipher.AES_CBC
@@ -253,6 +253,10 @@ class MainWindow(QMainWindow):
     def __addItem(self) -> None:
         if self.__group.type() == Type.PASSWORD:
             win = EditPasswordWindow(self)
+            win.itemCreated.connect(self.__group.add_item)
+            win.exec_()
+        elif self.__group.type() == Type.CARD:
+            win = EditCardWindow(self)
             win.itemCreated.connect(self.__group.add_item)
             win.exec_()
 
@@ -587,12 +591,81 @@ class EditPasswordWindow(QDialog):
         self.accept()
 
     def __errorMessage(self) -> QMessageBox:
-        msg = QMessageBox(self, icon=QMessageBox.Critical, windowTitle="Database Settings.", text="Invalid data")
+        msg = QMessageBox(self, icon=QMessageBox.Critical, windowTitle=self.windowTitle(), text="Invalid data")
         if not PasswordItem.check_url(self.__edt_url.text()):
             msg.setInformativeText("URL format is not valid\nAcceptable format <protocol>/<hostname>\nExample: https://website.com")
         elif not PasswordItem.check_login(self.__edt_login.text()):
             msg.setInformativeText("Empty login is not allowed")
         elif not PasswordItem.check_password(self.__edt_password.text()):
             msg.setInformativeText("Empty password is not allowed")
+
+        return None if not msg.informativeText() else msg
+
+
+class EditCardWindow(QDialog):
+
+    itemCreated = pyqtSignal(CardItem)
+
+    def __init__(self, *args, item: CardItem = None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.setWindowTitle(f"{'New' if not item else 'Edit'} Card")
+        self.setWindowFlags(self.windowFlags() & ~Qt.WindowContextHelpButtonHint)
+        self.__item = item
+        self.__edt_title = QLineEdit(item.entry("title") if item else "")
+        self.__edt_number = QLineEdit(item.entry("number") if item else "", inputMask="0000 0000 0000 0000")
+        self.__edt_cvv = QLineEdit(item.entry("cvv") if item else "", inputMask="0000")
+        self.__wgt_expiration = widgets.ExpirationDateWidget(text=item.entry("expiration") if item else "")
+        self.__edt_holder = QLineEdit(item.entry("holder") if item else "")
+        self.__mem_notes = QTextEdit(item.entry("notes") if item else "")
+        btn_box = QDialogButtonBox(QDialogButtonBox.Save | QDialogButtonBox.Cancel)
+        btn_box.accepted.connect(self.__save)
+        btn_box.rejected.connect(self.reject)
+
+        lyt_edits = QFormLayout()
+        lyt_edits.addRow(QLabel("Title"), self.__edt_title)
+        lyt_edits.addRow(QLabel("Number"), self.__edt_number)
+        lyt_edits.addRow(QLabel("CVV"), self.__edt_cvv)
+        lyt_edits.addRow(QLabel("Expiration"), self.__wgt_expiration)
+        lyt_edits.addRow(QLabel("Holder"), self.__edt_holder)
+
+        lyt_notes = QVBoxLayout()
+        lyt_notes.addWidget(QLabel("Notes"))
+        lyt_notes.addWidget(self.__mem_notes)
+
+        lyt_main = QVBoxLayout()
+        lyt_main.addLayout(lyt_edits)
+        lyt_main.addLayout(lyt_notes)
+        lyt_main.addWidget(btn_box)
+        self.setLayout(lyt_main)
+
+    def __save(self) -> None:
+        msg = self.__errorMessage()
+        if msg is not None:
+            msg.exec_()
+            return
+
+        data = {
+            "title": self.__edt_title.text(),
+            "number": self.__edt_number.text(),
+            "cvv": self.__edt_cvv.text(),
+            "expiration": self.__wgt_expiration.text(),
+            "holder": self.__edt_holder.text(),
+            "notes": self.__mem_notes.toPlainText()
+        }
+        if self.__item is None:
+            self.__item = CardItem(data)
+            self.itemCreated.emit(self.__item)
+        else:
+            for k, v in data:
+                self.__item.entry(k, v)
+
+        self.accept()
+
+    def __errorMessage(self) -> QMessageBox:
+        msg = QMessageBox(self, icon=QMessageBox.Critical, windowTitle=self.windowTitle(), text="Invalid data")
+        if not CardItem.check_number(self.__edt_number.text()):
+            msg.setInformativeText("Card number invalid format.\nExample: 1234 1234 1234 1234")
+        elif not CardItem.check_cvv(self.__edt_cvv.text()):
+            msg.setInformativeText("Card CVV number invalid format.\nExample 1234")
 
         return None if not msg.informativeText() else msg

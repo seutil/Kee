@@ -146,32 +146,32 @@ class CardItem(_BaseItem):
         super().__init__(
             required_keys=["number", "cvv"],
             keys={
-                "title": self.__check_title,
-                "number": self.__check_number,
-                "cvv": self.__check_cvv,
-                "expiration": self.__check_expiration,
-                "holder": self.__check_holder,
-                "notes": self.__check_notes,
+                "title": CardItem.check_title,
+                "number": CardItem.check_number,
+                "cvv": CardItem.check_cvv,
+                "expiration": CardItem.check_expiration,
+                "holder": CardItem.check_holder,
+                "notes": CardItem.check_notes,
             },
             data=data,
         )
 
-    def __check_title(self, title) -> bool:
+    def check_title(title) -> bool:
         return True
 
-    def __check_number(self, number: str) -> bool:
+    def check_number(number: str) -> bool:
         return re.match("\d{4} \d{4} \d{4} \d{4}", number)
 
-    def __check_cvv(self, cvv: str) -> bool:
+    def check_cvv(cvv: str) -> bool:
         return re.match("\d{3,4}", cvv)
 
-    def __check_expiration(self, expiration: str) -> bool:
+    def check_expiration(expiration: str) -> bool:
         return True if not expiration else re.match("\d{2}/\d{2}", expiration)
 
-    def __check_holder(self, holder: str) -> bool:
+    def check_holder(holder: str) -> bool:
         return True
 
-    def __check_notes(self, notes: str) -> bool:
+    def check_notes(notes: str) -> bool:
         return True
 
 

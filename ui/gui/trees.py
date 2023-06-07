@@ -1,4 +1,4 @@
-
+ 
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
@@ -53,6 +53,7 @@ class _DatabaseStandardItem(QStandardItem):
 
         if self._database.status() == Status.CLOSED and self.hasChildren():
             self.removeRows(0, self.rowCount())
+            self._loaded = 0
 
 
 class _GroupStandardItem(QStandardItem):

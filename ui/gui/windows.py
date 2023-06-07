@@ -50,14 +50,8 @@ class MainWindow(QMainWindow):
             "save-database-as": QAction("Save As...", self, shortcut=QKeySequence("Ctrl+Shift+S")),
             "database-settings": QAction("Database Settings...", self),
             "change-master-key": QAction("Change Master Key...", self),
-            "export-database": QAction("Export...", self),
-            "import-database": QAction("Import...", self),
             
             # group actions
-            "import-group-csv": QAction("CSV", self),
-            "import-group-json": QAction("JSON", self),
-            "export-group-csv": QAction("CSV", self),
-            "export-group-json": QAction("JSON", self),
             "add-group-passwords": QAction("Passwords", self),
             "add-group-cards": QAction("Cards", self),
             "add-group-identities": QAction("Identities", self),
@@ -79,9 +73,6 @@ class MainWindow(QMainWindow):
             "card-copy-cvv": QAction("Copy CVV", self),
             "card-copy-holder": QAction("Copy Holder", self),
             "card-remove-expired": QAction("Remove Expired Cards", self),
-
-            "identity-copy-email": QAction("Copy Email", self),
-            "identity-copy-phone": QAction("Copy Phone", self),
         }
 
     def __initMenu(self) -> None:
@@ -97,9 +88,6 @@ class MainWindow(QMainWindow):
         database_menu.addAction(self.__actions["database-settings"])
         database_menu.addAction(self.__actions["change-master-key"])
         database_menu.addSeparator()
-        database_menu.addAction(self.__actions["import-database"])
-        database_menu.addAction(self.__actions["export-database"])
-        database_menu.addSeparator()
         database_menu.addAction(self.__actions["exit"])
 
         group_menu = self.menuBar().addMenu("Group")
@@ -111,14 +99,6 @@ class MainWindow(QMainWindow):
         group_menu.addAction(self.__actions["remove-group"])
         group_menu.addAction(self.__actions["clear-group"])
         group_menu.addAction(self.__actions["rename-group"])
-        group_menu.addSeparator()
-        group_import = group_menu.addMenu("Import")
-        group_import.addAction(self.__actions["import-group-csv"])
-        group_import.addAction(self.__actions["import-group-json"])
-        group_export = group_menu.addMenu("Export")
-        group_export.addAction(self.__actions["export-group-csv"])
-        group_export.addAction(self.__actions["export-group-json"])
-        group_menu.addSeparator()
 
         menu_item = self.menuBar().addMenu("Item")
         menu_item.addAction(self.__actions["add-item"])
@@ -285,12 +265,9 @@ class MainWindow(QMainWindow):
             "save-database-as",
             "database-settings",
             "change-master-key",
-            "export-database",
             "add-group-cards",
             "add-group-passwords",
             "add-group-identities",
-            "import-group-csv",
-            "import-group-json",
         ]
         for action in actions:
             self.__actions[action].setEnabled(database is not None)
@@ -302,8 +279,6 @@ class MainWindow(QMainWindow):
             "clear-group",
             "remove-group",
             "rename-group",
-            "export-group-csv",
-            "export-group-json",
             "add-item"
         ]
         for action in actions:

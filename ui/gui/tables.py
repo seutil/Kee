@@ -63,7 +63,7 @@ class _CardsGroupModel(QAbstractTableModel):
         self.headers = ["Title", "Holder", "Number", "CVV", "Expiration", "Notes"]
 
     def headerData(self, section: int, orientation: Qt.Orientation, role: Qt.ItemDataRole) -> QVariant:
-        if section == Qt.Vertical or role != Qt.DisplayRole:
+        if orientation == Qt.Vertical or role != Qt.DisplayRole:
             return QVariant()
 
         return self.headers[section]

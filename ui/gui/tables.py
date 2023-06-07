@@ -22,10 +22,11 @@ class _PasswordsGroupModel(QAbstractTableModel):
             return QVariant()
         
         if role == Qt.DisplayRole:
-            return self._headers[section]
+            return self.headers[section]
         elif role != Qt.DecorationRole:
             return QVariant()
 
+        # TODO: Fix icons for url, email, user
         if section == 1:
             return QIcon(":/icons/url")
         elif section == 2:

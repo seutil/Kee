@@ -181,26 +181,30 @@ class IdentityItem(_BaseItem):
         super().__init__(
             required_keys=["full_name"],
             keys={
-                "title": self.__check_title,
-                "full_name": self.__check_full_name,
-                "phone": self.__check_phone,
-                "email": self.__check_email,
-                "notes": self.__check_notes,
+                "title": IdentityItem.check_title,
+                "full_name": IdentityItem.check_full_name,
+                "phone": IdentityItem.check_phone,
+                "email": IdentityItem.check_email,
+                "notes": IdentityItem.check_notes,
             },
             data=data,
         )
 
-    def __check_title(self, title: str) -> bool:
+    def check_title(title: str) -> bool:
         return True
 
-    def __check_full_name(self, full_name: str) -> bool:
+    def check_full_name(full_name: str) -> bool:
         return full_name != ""
 
-    def __check_phone(self, phone: str) -> bool:
-        return True if not phone else phonenumbers.is_valid_number(phone)
+    def check_phone(phone: str) -> bool:
+        if not phone:
+            return True
 
-    def __check_email(self, email: str) -> bool:
-        return True if not email else re.match("[^@]+@[^@]+\.[^@]+", email)
+        ph = phonenumbers.parse(phone)
+        return phonenumbers.is_valid_number(ph)
 
-    def __check_notes(self, notes: str) -> bool:
+    def check_email(email: str) -> bool:
+        return True if not email else validators.email(email) is True
+
+    def check_notes(notes: str) -> bool:
         return True

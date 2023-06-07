@@ -162,11 +162,14 @@ class MainWindow(QMainWindow):
         self.__actions["rename-group"].triggered.connect(self.__renameGroup)
         self.__actions["remove-group"].triggered.connect(self.__removeGroup)
         self.__actions["clear-group"].triggered.connect(self.__clearGroup)
-        self.__actions["add-item"].triggered.connect(self.__addItem)
+        self.__actions["add-item"].triggered.connect(lambda: self.__editItem(self.__item))
 
         self.__tree_databases.databaseOpening.connect(self.__unlockDatabase)
         self.__tree_databases.databaseSelected.connect(self.__setCurrentDatabase)
         self.__tree_databases.groupSelected.connect(self.__setCurrentGroup)
+
+        self.__tbl_group.itemSelected.connect(self.__setCurrentItem)
+        self.__tbl_group.itemDoubleClicked.connect(self.__editItem)
 
     @pyqtSlot()
     def __newDatabase(self) -> None:
@@ -250,18 +253,19 @@ class MainWindow(QMainWindow):
         for item in self.__group.items():
             item.delete()
 
-    @pyqtSlot()
-    def __addItem(self) -> None:
+    @pyqtSlot(ItemInterface)
+    def __editItem(self, item: ItemInterface) -> None:
         if self.__group.type() == Type.PASSWORD:
-            win = EditPasswordWindow(self)
+            win = EditPasswordWindow(self, item=item)
         elif self.__group.type() == Type.CARD:
-            win = EditCardWindow(self)
+            win = EditCardWindow(self, item=item)
         elif self.__group.type() == Type.IDENTITY:
-            win = EditIdentityWindow(self)
+            win = EditIdentityWindow(self, item=item)
         else:
             return
 
-        win.itemCreated.connect(self.__tbl_group.addItem)
+        if item is None:
+            win.itemCreated.connect(self.__tbl_group.addItem)
         win.exec_()
 
     @pyqtSlot(DatabaseInterface)
@@ -540,7 +544,7 @@ class EditPasswordWindow(QDialog):
     def __init__(self, *args, item: ItemInterface = None, **kwargs): 
         super().__init__(*args, **kwargs)
         self.__item = item
-        self.setWindowTitle(f"{'New' if not item else 'Edit'} Password")
+        self.setWindowTitle(f"{'New' if item is None else 'Edit'} Password")
         self.setWindowFlags(self.windowFlags() & ~Qt.WindowContextHelpButtonHint)
         self.__item = item
         self.__edt_title = QLineEdit(item.entry("title") if item else "")
@@ -589,7 +593,7 @@ class EditPasswordWindow(QDialog):
             self.__item = PasswordItem(data)
             self.itemCreated.emit(self.__item)
         else:
-            for k, v in data:
+            for k, v in data.items():
                 self.__item.entry(k, v)
 
         self.accept()
@@ -612,7 +616,7 @@ class EditCardWindow(QDialog):
 
     def __init__(self, *args, item: CardItem = None, **kwargs):
         super().__init__(*args, **kwargs)
-        self.setWindowTitle(f"{'New' if not item else 'Edit'} Card")
+        self.setWindowTitle(f"{'New' if item is None else 'Edit'} Card")
         self.setWindowFlags(self.windowFlags() & ~Qt.WindowContextHelpButtonHint)
         self.__item = item
         self.__edt_title = QLineEdit(item.entry("title") if item else "")
@@ -660,7 +664,7 @@ class EditCardWindow(QDialog):
             self.__item = CardItem(data)
             self.itemCreated.emit(self.__item)
         else:
-            for k, v in data:
+            for k, v in data.items():
                 self.__item.entry(k, v)
 
         self.accept()
@@ -726,7 +730,7 @@ class EditIdentityWindow(QDialog):
             self.__item = IdentityItem(data)
             self.itemCreated.emit(self.__item)
         else:
-            for k, v in data:
+            for k, v in data.items():
                 self.__item.entry(k, v)
 
         self.accept()

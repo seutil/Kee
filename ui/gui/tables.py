@@ -120,10 +120,33 @@ class _IdenitiesGroupModel(QAbstractTableModel):
 
 class GroupTable(QTableView):
 
+    itemSelected = pyqtSignal(ItemInterface)
+    itemDoubleClicked = pyqtSignal(object)
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.verticalHeader().setSectionResizeMode(QHeaderView.Fixed)
         self.verticalHeader().setDefaultSectionSize(24)
+
+    def mousePressEvent(self, event: QMouseEvent) -> None:
+        index = self.indexAt(event.pos())
+        if not index.isValid():
+            event.ignore()
+            return
+
+        item = self.model().group.items()[index.row()]
+        self.itemSelected.emit(item)
+        super().mousePressEvent(event)
+
+    def mouseDoubleClickEvent(self, event: QMouseEvent) -> None:
+        index = self.indexAt(event.pos())
+        if not index.isValid():
+            event.ignore()
+            return
+
+        item = self.model().group.items()[index.row()]
+        self.itemDoubleClicked.emit(item)
+        event.accept()
 
     @pyqtSlot(GroupInterface)
     def load(self, group: GroupInterface) -> None:

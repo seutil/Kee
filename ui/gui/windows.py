@@ -142,6 +142,7 @@ class MainWindow(QMainWindow):
         self.__actions["remove-group"].triggered.connect(self.__removeGroup)
         self.__actions["clear-group"].triggered.connect(self.__clearGroup)
         self.__actions["add-item"].triggered.connect(lambda: self.__editItem(self.__item))
+        self.__actions["edit-item"].triggered.connect(lambda: self.__editItem(self.__item))
         self.__actions["password-open-url"].triggered.connect(lambda: QDesktopServices.openUrl(QUrl(self.__item.entry("url"))))
         self.__actions["password-copy-login"].triggered.connect(lambda: self.__clipboard.setText(self.__item.entry("login")))
         self.__actions["password-copy-password"].triggered.connect(lambda: self.__clipboard.setText(self.__item.entry("password")))

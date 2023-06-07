@@ -12,7 +12,7 @@ from lib.core.config import Config
 from lib.core.database import Status, DatabaseInterface
 from lib.core.sqlite_database import SQLiteDatabase
 from lib.core.data.group import Type, GroupInterface
-from lib.core.data.item import ItemInterface, PasswordItem, CardItem
+from lib.core.data.item import ItemInterface, PasswordItem, CardItem, IdentityItem
 from . import line_edits, dialogs, trees, tables, widgets
 
 
@@ -254,12 +254,15 @@ class MainWindow(QMainWindow):
     def __addItem(self) -> None:
         if self.__group.type() == Type.PASSWORD:
             win = EditPasswordWindow(self)
-            win.itemCreated.connect(self.__group.add_item)
-            win.exec_()
         elif self.__group.type() == Type.CARD:
             win = EditCardWindow(self)
-            win.itemCreated.connect(self.__group.add_item)
-            win.exec_()
+        elif self.__group.type() == Type.IDENTITY:
+            win = EditIdentityWindow(self)
+        else:
+            return
+
+        win.itemCreated.connect(self.__group.add_item)
+        win.exec_()
 
     @pyqtSlot(DatabaseInterface)
     def __setCurrentDatabase(self, database: DatabaseInterface) -> None:
@@ -668,5 +671,69 @@ class EditCardWindow(QDialog):
             msg.setInformativeText("Card number invalid format.\nExample: 1234 1234 1234 1234")
         elif not CardItem.check_cvv(self.__edt_cvv.text()):
             msg.setInformativeText("Card CVV number invalid format.\nExample 1234")
+
+        return None if not msg.informativeText() else msg
+
+
+class EditIdentityWindow(QDialog):
+
+    itemCreated = pyqtSignal(IdentityItem)
+
+    def __init__(self, *args, item: IdentityItem = None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.setWindowTitle(f"{'New' if item is None else 'Edit'} Identity")
+        self.setWindowFlags(self.windowFlags() & ~Qt.WindowContextHelpButtonHint)
+        self.__item = item
+        self.__edt_title = QLineEdit(item.entry("title") if item else "")
+        self.__edt_full_name = QLineEdit(item.entry("full_name") if item else "")
+        self.__edt_phone = QLineEdit(item.entry("phone") if item else "", inputMask="+0 000 000-00-00")
+        self.__edt_email = QLineEdit(item.entry("email") if item else "")
+        self.__mem_notes = QTextEdit(item.entry("notes") if item else "")
+        btn_box = QDialogButtonBox(QDialogButtonBox.Save | QDialogButtonBox.Cancel)
+        btn_box.accepted.connect(self.__save)
+        btn_box.rejected.connect(self.reject)
+
+        lyt_edits = QFormLayout()
+        lyt_edits.addRow(QLabel("Title"), self.__edt_title)
+        lyt_edits.addRow(QLabel("Full name"), self.__edt_full_name)
+        lyt_edits.addRow(QLabel("Phone"), self.__edt_phone)
+        lyt_edits.addRow(QLabel("Email"), self.__edt_email)
+
+        lyt_notes = QVBoxLayout()
+        lyt_notes.addWidget(QLabel("Notes"))
+        lyt_notes.addWidget(self.__mem_notes)
+
+        lyt_main = QVBoxLayout()
+        lyt_main.addLayout(lyt_edits)
+        lyt_main.addLayout(lyt_notes)
+        lyt_main.addWidget(btn_box)
+        self.setLayout(lyt_main)
+
+    def __save(self) -> None:
+        msg = self.__errorMessage()
+        if msg is not None:
+            msg.exec_()
+            return
+
+        data = {
+            "title": self.__edt_title.text(),
+            "full_name": self.__edt_full_name.text(),
+            "phone": self.__edt_phone.text(),
+            "email": self.__edt_email.text(),
+            "notes": self.__mem_notes.toPlainText()
+        }
+        if self.__item is None:
+            self.__item = IdentityItem(data)
+            self.itemCreated.emit(self.__item)
+        else:
+            for k, v in data:
+                self.__item.entry(k, v)
+
+        self.accept()
+
+    def __errorMessage(self) -> QMessageBox:
+        msg = QMessageBox(self, icon=QMessageBox.Critical, windowTitle=self.windowTitle(), text="Invalid data")
+        if not IdentityItem.check_full_name(self.__edt_full_name.text()):
+            msg.setInformativeText("Full name cannot be empty")
 
         return None if not msg.informativeText() else msg

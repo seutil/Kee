@@ -130,6 +130,9 @@ class _BaseGroup(GroupInterface):
 
         self.database()._set_state(self.database()._modified_state)
 
+    def __len__(self) -> int:
+        return len(self._items)
+
 
 class PasswordsGroup(_BaseGroup):
 

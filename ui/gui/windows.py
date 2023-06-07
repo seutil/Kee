@@ -261,7 +261,7 @@ class MainWindow(QMainWindow):
         else:
             return
 
-        win.itemCreated.connect(self.__group.add_item)
+        win.itemCreated.connect(self.__tbl_group.addItem)
         win.exec_()
 
     @pyqtSlot(DatabaseInterface)

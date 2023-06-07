@@ -119,8 +119,14 @@ class _IdenitiesGroupModel(QAbstractTableModel):
 
 class GroupTable(QTableView):
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.verticalHeader().setSectionResizeMode(QHeaderView.Fixed)
+        self.verticalHeader().setDefaultSectionSize(24)
+
     @pyqtSlot(GroupInterface)
     def load(self, group: GroupInterface) -> None:
+        self.reset()
         if group.type() == Type.PASSWORD:
             self.setModel(_PasswordsGroupModel(group))
         elif group.type() == Type.CARD:

@@ -127,7 +127,7 @@ class _ClosedState(_BaseState):
         """, [group.name()]).fetchall()
         for i in res:
             item = factory.item_from_type(group.type())(json.loads(dec(i[1])))
-            item._set_id(res[0])
+            item._set_id(i[0])
             group.add_item(item)
 
 
@@ -286,7 +286,7 @@ class _ModifiedState(_OpenedState):
                 UPDATE item
                 SET data = ?
                 WHERE id = ?
-            """, data, item._id)
+            """, [data, item._id])
 
 
 class SQLiteDatabase(DatabaseInterface):

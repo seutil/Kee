@@ -271,6 +271,7 @@ class MainWindow(QMainWindow):
         ]
         for action in actions:
             self.__actions[action].setEnabled(database is not None)
+        self.__setCurrentItem(None)
 
     @pyqtSlot(GroupInterface)
     def __setCurrentGroup(self, group: GroupInterface) -> None:

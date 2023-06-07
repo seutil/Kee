@@ -12,7 +12,7 @@ from lib.core.config import Config
 from lib.core.database import Status, DatabaseInterface
 from lib.core.sqlite_database import SQLiteDatabase
 from lib.core.data.group import Type, GroupInterface
-from lib.core.data.item import ItemInterface
+from lib.core.data.item import ItemInterface, PasswordItem
 from . import line_edits, dialogs, trees, tables
 
 
@@ -162,6 +162,7 @@ class MainWindow(QMainWindow):
         self.__actions["rename-group"].triggered.connect(self.__renameGroup)
         self.__actions["remove-group"].triggered.connect(self.__removeGroup)
         self.__actions["clear-group"].triggered.connect(self.__clearGroup)
+        self.__actions["add-item"].triggered.connect(self.__addItem)
 
         self.__tree_databases.databaseOpening.connect(self.__unlockDatabase)
         self.__tree_databases.databaseSelected.connect(self.__setCurrentDatabase)
@@ -248,6 +249,13 @@ class MainWindow(QMainWindow):
         for item in self.__group.items():
             item.delete()
 
+    @pyqtSlot()
+    def __addItem(self) -> None:
+        if self.__group.type() == Type.PASSWORD:
+            win = EditPasswordWindow(self)
+            win.itemCreated.connect(self.__group.add_item)
+            win.exec_()
+
     @pyqtSlot(DatabaseInterface)
     def __setCurrentDatabase(self, database: DatabaseInterface) -> None:
         self.__database = database
@@ -282,13 +290,16 @@ class MainWindow(QMainWindow):
         for action in actions:
             self.__actions[action].setEnabled(group is not None)
 
+        if group is not None:
+            self.__tbl_group.load(group)
+
     @pyqtSlot(ItemInterface)
     def __setCurrentItem(self, item: ItemInterface) -> None:
         self.__item = item
-        not_none = self.__item is not None 
+        not_none = self.__item is not None
         self.__actions["remove-item"].setEnabled(not_none)
         self.__actions["edit-item"].setEnabled(not_none)
-        self.__menu_password.setEnabled(not_none and itemitem.group().type() is Type.PASSWORD)
+        self.__menu_password.setEnabled(not_none and item.group().type() is Type.PASSWORD)
         self.__menu_card.setEnabled(not_none and item.group().type() is Type.CARD)
 
     @pyqtSlot(DatabaseInterface)
@@ -512,3 +523,76 @@ class DatabaseSettingsWindow(QDialog):
         self._database.encoder(encoder.from_id(self.__cbx_encoder.currentText()))
         self.databaseChanged.emit(self._database)
         self.accept()
+
+
+class EditPasswordWindow(QDialog):
+
+    itemCreated = pyqtSignal(ItemInterface)
+
+    def __init__(self, *args, item: ItemInterface = None, **kwargs): 
+        super().__init__(*args, **kwargs)
+        self.__item = item
+        self.setWindowTitle(f"{'New' if not item else 'Edit'} Password")
+        self.setWindowFlags(self.windowFlags() & ~Qt.WindowContextHelpButtonHint)
+        self.__item = item
+        self.__edt_title = QLineEdit(item.entry("title") if item else "")
+        self.__edt_url = QLineEdit(item.entry("url") if item else "https://")
+        self.__edt_login = QLineEdit(item.entry("login") if item else "")
+        self.__edt_email = QLineEdit(item.entry("email") if item else "")
+        self.__edt_password = line_edits.PasswordLineEdit(item.entry("password") if item else "")
+        self.__mem_notes = QTextEdit(item.entry("notes") if item else "")
+        btn_box = QDialogButtonBox(QDialogButtonBox.Save | QDialogButtonBox.Cancel)
+        btn_box.accepted.connect(self.__save)
+        btn_box.rejected.connect(self.reject)
+
+        lyt_edits = QFormLayout()
+        lyt_edits.addRow(QLabel("Title"), self.__edt_title)
+        lyt_edits.addRow(QLabel("URL"), self.__edt_url)
+        lyt_edits.addRow(QLabel("Login"), self.__edt_login)
+        lyt_edits.addRow(QLabel("Email"), self.__edt_email)
+        lyt_edits.addRow(QLabel("Password"), self.__edt_password)
+
+        lyt_memo = QVBoxLayout()
+        lyt_memo.addWidget(QLabel("Notes"))
+        lyt_memo.addWidget(self.__mem_notes)
+
+        lyt_main = QVBoxLayout()
+        lyt_main.addLayout(lyt_edits)
+        lyt_main.addLayout(lyt_memo)
+        lyt_main.addWidget(btn_box)
+
+        self.setLayout(lyt_main)
+
+    def __save(self) -> None:
+        msg = self.__errorMessage()
+        if msg is not None:
+            msg.exec_()
+            return
+
+        data = {
+            "title": self.__edt_title.text(),
+            "url": self.__edt_url.text(),
+            "login": self.__edt_login.text(),
+            "email": self.__edt_email.text(),
+            "password": self.__edt_password.text(),
+            "notes": self.__mem_notes.toPlainText()
+        }
+        if not self.__item:
+            self.__item = PasswordItem(data)
+            self.itemCreated.emit(self.__item)
+        else:
+            for k, v in data:
+                self.__item.entry(k, v)
+
+        self.accept()
+
+    def __errorMessage(self) -> QMessageBox:
+        msg = QMessageBox(self, icon=QMessageBox.Critical, windowTitle="Database Settings.", text="Invalid data")
+        if not PasswordItem.check_url(self.__edt_url.text()):
+            msg.setInformativeText("URL format is not valid\nAcceptable format <protocol>/<hostname>\nExample: https://website.com")
+        elif not PasswordItem.check_login(self.__edt_login.text()):
+            msg.setInformativeText("Empty login is not allowed")
+        elif not PasswordItem.check_password(self.__edt_password.text()):
+            msg.setInformativeText("Empty password is not allowed")
+
+        return None if not msg.informativeText() else msg

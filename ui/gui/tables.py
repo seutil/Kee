@@ -5,6 +5,7 @@ from PyQt5.QtWidgets import *
 
 
 from lib.core.data.group import Type, GroupInterface, PasswordsGroup, CardsGroup, IdentitiesGroup
+from lib.core.data.item import ItemInterface
 
 
 class _PasswordsGroupModel(QAbstractTableModel):
@@ -135,3 +136,10 @@ class GroupTable(QTableView):
             self.setModel(_IdenitiesGroupModel(group))
         else:
             raise Exception(f"Unsupported group type: {group.type().value}")
+
+    @pyqtSlot(ItemInterface)
+    def addItem(self, item: ItemInterface) -> None:
+        m = self.model()
+        m.beginInsertRows(QModelIndex(), len(m.group), len(m.group))
+        m.group.add_item(item)
+        m.endInsertRows()

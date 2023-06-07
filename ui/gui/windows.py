@@ -72,7 +72,6 @@ class MainWindow(QMainWindow):
             "card-copy-number": QAction("Copy Number", self),
             "card-copy-cvv": QAction("Copy CVV", self),
             "card-copy-holder": QAction("Copy Holder", self),
-            "card-remove-expired": QAction("Remove Expired Cards", self),
         }
 
     def __initMenu(self) -> None:
@@ -112,7 +111,6 @@ class MainWindow(QMainWindow):
         self.__menu_card.addAction(self.__actions["card-copy-number"])
         self.__menu_card.addAction(self.__actions["card-copy-cvv"])
         self.__menu_card.addAction(self.__actions["card-copy-holder"])
-        self.__menu_card.addAction(self.__actions["card-remove-expired"])
 
     def __initUI(self) -> None:
         self.__tbl_group = tables.GroupTable()

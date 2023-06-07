@@ -111,32 +111,32 @@ class PasswordItem(_BaseItem):
         super().__init__(
             required_keys=["url", "login", "password"],
             keys={
-                "title": self.__check_title,
-                "url": self.__check_url,
-                "login": self.__check_login,
-                "email": self.__check_email,
-                "password": self.__check_password,
-                "notes": self.__check_notes,
+                "title": PasswordItem.check_title,
+                "url": PasswordItem.check_url,
+                "login": PasswordItem.check_login,
+                "email": PasswordItem.check_email,
+                "password": PasswordItem.check_password,
+                "notes": PasswordItem.check_notes,
             },
             data=data,
         )
 
-    def __check_title(self, title) -> bool:
+    def check_title(title) -> bool:
         return True
 
-    def __check_url(self, url) -> bool:
+    def check_url(url) -> bool:
         return False if url == "" else validators.url(url)
 
-    def __check_login(self, login) -> bool:
+    def check_login(login) -> bool:
         return login != ""
 
-    def __check_email(self, email) -> bool:
-        return validators.email(email) is True
+    def check_email(email) -> bool:
+        return True if not email else validators.email(email) is True
 
-    def __check_password(self, password) -> bool:
+    def check_password(password) -> bool:
         return password != ""
 
-    def __check_notes(self, note) -> bool:
+    def check_notes(note) -> bool:
         return True
 
 

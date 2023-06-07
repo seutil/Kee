@@ -103,7 +103,7 @@ class _IdenitiesGroupModel(QAbstractTableModel):
         return self.headers[section]
 
     def data(self, index: QModelIndex, role: Qt.ItemDataRole) -> QVariant:
-        if not index.isValid():
+        if not index.isValid() or role != Qt.DisplayRole:
             return QVariant()
 
         item = self.group.items()[index.row()]

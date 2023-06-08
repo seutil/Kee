@@ -142,6 +142,7 @@ class MainWindow(QMainWindow):
         self.__actions["remove-group"].triggered.connect(self.__removeGroup)
         self.__actions["clear-group"].triggered.connect(self.__clearGroup)
         self.__actions["add-item"].triggered.connect(lambda: self.__editItem(self.__item))
+        self.__actions["remove-item"].triggered.connect(lambda: self.__removeItem(self.__item))
         self.__actions["edit-item"].triggered.connect(lambda: self.__editItem(self.__item))
         self.__actions["password-open-url"].triggered.connect(lambda: QDesktopServices.openUrl(QUrl(self.__item.entry("url"))))
         self.__actions["password-copy-login"].triggered.connect(lambda: self.__clipboard.setText(self.__item.entry("login")))
@@ -236,8 +237,9 @@ class MainWindow(QMainWindow):
         if clear == QMessageBox.No:
             return
 
-        for item in self.__group.items():
-            item.delete()
+        self.__tbl_group.clear()
+        self.__tree_databases.viewport().update()
+        self.__setCurrentItem(None)
 
     @pyqtSlot(ItemInterface)
     def __editItem(self, item: ItemInterface) -> None:
@@ -252,7 +254,17 @@ class MainWindow(QMainWindow):
 
         if item is None:
             win.itemCreated.connect(self.__tbl_group.addItem)
+
         win.exec_()
+
+    @pyqtSlot(ItemInterface)
+    def __removeItem(self, item: ItemInterface) -> None:
+        remove = QMessageBox.question(self, "Remove Item", "Are you shure you want remove item?")
+        if remove == QMessageBox.No:
+            return
+
+        self.__tbl_group.removeItem(self.__item)
+        self.__tree_databases.viewport().update()
 
     @pyqtSlot(DatabaseInterface)
     def __setCurrentDatabase(self, database: DatabaseInterface) -> None:

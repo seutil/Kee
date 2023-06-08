@@ -166,3 +166,19 @@ class GroupTable(QTableView):
         m.beginInsertRows(QModelIndex(), len(m.group), len(m.group))
         m.group.add_item(item)
         m.endInsertRows()
+
+    @pyqtSlot(ItemInterface)
+    def removeItem(self, item: ItemInterface) -> None:
+        m = self.model()
+        pos = m.group.items().index(item)
+        m.beginRemoveRows(QModelIndex(), pos, pos)
+        m.group.remove_item(item)
+        m.endRemoveRows()
+
+    @pyqtSlot()
+    def clear(self) -> None:
+        m = self.model()
+        m.beginRemoveRows(QModelIndex(), 0, len(m.group)-1)
+        m.endRemoveRows()
+        for item in m.group.items():
+            m.group.remove_item(item)

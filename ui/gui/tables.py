@@ -143,7 +143,6 @@ class GroupTable(QTableView):
         index = self.indexAt(event.pos())
         if not index.isValid():
             self.createItem.emit()
-            event.ignore()
             return
 
         item = self.model().group.items()[index.row()]

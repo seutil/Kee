@@ -157,6 +157,7 @@ class MainWindow(QMainWindow):
 
         self.__tbl_group.itemSelected.connect(self.__setCurrentItem)
         self.__tbl_group.itemDoubleClicked.connect(self.__editItem)
+        self.__tbl_group.createItem.connect(lambda: self.__editItem(None))
 
     @pyqtSlot()
     def __newDatabase(self) -> None:

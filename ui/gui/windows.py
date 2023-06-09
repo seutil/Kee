@@ -39,17 +39,17 @@ class MainWindow(QMainWindow):
     
     def __initActions(self) -> None:
         self.__actions = {
-            "exit": QAction("Exit", self, shortcut=QKeySequence("Ctrl+Q"), triggered=QApplication.exit),
+            "exit": QAction(QIcon(":/icons/exit"), "Exit", self, shortcut=QKeySequence("Ctrl+Q"), triggered=QApplication.exit),
 
             # database actions
-            "new-database": QAction("New", self, shortcut=QKeySequence("Ctrl+N")),
-            "open-database": QAction("Open", self, shortcut=QKeySequence("Ctrl+O")),
-            "close-database": QAction("Close", self, shortcut=QKeySequence("Ctrl+D")),
-            "remove-database": QAction("Remove", self, shortcut=QKeySequence("Ctrl+R")),
-            "save-database": QAction("Save", self, shortcut=QKeySequence("Ctrl+S")),
-            "save-database-as": QAction("Save As...", self, shortcut=QKeySequence("Ctrl+Shift+S")),
-            "database-settings": QAction("Database Settings...", self),
-            "change-master-key": QAction("Change Master Key...", self),
+            "new-database": QAction(QIcon(":/icons/new"), "New", self, shortcut=QKeySequence("Ctrl+N")),
+            "open-database": QAction(QIcon(":/icons/open"), "Open", self, shortcut=QKeySequence("Ctrl+O")),
+            "close-database": QAction(QIcon(":/icons/close"), "Close", self, shortcut=QKeySequence("Ctrl+D")),
+            "remove-database": QAction(QIcon(":/icons/remove"), "Remove", self, shortcut=QKeySequence("Ctrl+R")),
+            "save-database": QAction(QIcon(":/icons/save"), "Save", self, shortcut=QKeySequence("Ctrl+S")),
+            "save-database-as": QAction(QIcon(":/icons/save-as"), "Save As...", self, shortcut=QKeySequence("Ctrl+Shift+S")),
+            "database-settings": QAction(QIcon(":/icons/settings"), "Database Settings...", self),
+            "change-master-key": QAction(QIcon(":/icons/key"), "Change Master Key...", self),
             
             # group actions
             "add-group-passwords": QAction("Passwords", self),

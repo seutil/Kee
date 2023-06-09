@@ -120,6 +120,7 @@ class _IdenitiesGroupModel(QAbstractTableModel):
 
 class GroupTable(QTableView):
 
+    createItem = pyqtSignal()
     itemSelected = pyqtSignal(ItemInterface)
     itemDoubleClicked = pyqtSignal(object)
 
@@ -141,6 +142,7 @@ class GroupTable(QTableView):
     def mouseDoubleClickEvent(self, event: QMouseEvent) -> None:
         index = self.indexAt(event.pos())
         if not index.isValid():
+            self.createItem.emit()
             event.ignore()
             return
 

@@ -52,12 +52,12 @@ class MainWindow(QMainWindow):
             "change-master-key": QAction(QIcon(":/icons/password"), "Change Master Key...", self),
             
             # group actions
-            "add-group-passwords": QAction("Passwords", self),
-            "add-group-cards": QAction("Cards", self),
-            "add-group-identities": QAction("Identities", self),
-            "rename-group": QAction("Rename...", self),
-            "remove-group": QAction("Remove", self),
-            "clear-group": QAction("Clear", self),
+            "add-group-passwords": QAction(QIcon(":/icons/password"), "Passwords", self),
+            "add-group-cards": QAction(QIcon(":/icons/card"), "Cards", self),
+            "add-group-identities": QAction(QIcon(":/icons/id-card"), "Identities", self),
+            "rename-group": QAction(QIcon(":/icons/edit"), "Rename...", self),
+            "remove-group": QAction(QIcon(":/icons/remove"), "Remove", self),
+            "clear-group": QAction(QIcon(":/icons/clear"), "Clear", self),
 
             # item actions
             "add-item": QAction("Add", self, shortcut=QKeySequence("Ctrl+Shift+N")),

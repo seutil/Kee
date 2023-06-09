@@ -10,6 +10,8 @@
         <file alias="save-as">icons/save-as.png</file>
         <file alias="settings">icons/settings.png</file>
         <file alias="password">icons/password.png</file>
+        <file alias="edit">icons/edit.png</file>
+        <file alias="clear">icons/clear.png</file>
         <file alias="show-password">icons/show-password.png</file>
         <file alias="hide-password">icons/hide-password.png</file>
         <file alias="create">icons/create.png</file>

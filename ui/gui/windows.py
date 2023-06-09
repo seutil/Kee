@@ -49,7 +49,7 @@ class MainWindow(QMainWindow):
             "save-database": QAction(QIcon(":/icons/save"), "Save", self, shortcut=QKeySequence("Ctrl+S")),
             "save-database-as": QAction(QIcon(":/icons/save-as"), "Save As...", self, shortcut=QKeySequence("Ctrl+Shift+S")),
             "database-settings": QAction(QIcon(":/icons/settings"), "Database Settings...", self),
-            "change-master-key": QAction(QIcon(":/icons/key"), "Change Master Key...", self),
+            "change-master-key": QAction(QIcon(":/icons/password"), "Change Master Key...", self),
             
             # group actions
             "add-group-passwords": QAction("Passwords", self),

@@ -90,11 +90,11 @@ class MainWindow(QMainWindow):
         database_menu.addAction(self.__actions["exit"])
 
         group_menu = self.menuBar().addMenu("Group")
-        group_add = group_menu.addMenu("Add")
+        self.__actions["add-group"] = group_menu.addMenu("Add")
+        self.__actions["add-group"].addAction(self.__actions["add-group-passwords"])
+        self.__actions["add-group"].addAction(self.__actions["add-group-cards"])
+        self.__actions["add-group"].addAction(self.__actions["add-group-identities"])
         group_menu.addSeparator()
-        group_add.addAction(self.__actions["add-group-passwords"])
-        group_add.addAction(self.__actions["add-group-cards"])
-        group_add.addAction(self.__actions["add-group-identities"])
         group_menu.addAction(self.__actions["remove-group"])
         group_menu.addAction(self.__actions["clear-group"])
         group_menu.addAction(self.__actions["rename-group"])
@@ -277,6 +277,7 @@ class MainWindow(QMainWindow):
             "save-database-as",
             "database-settings",
             "change-master-key",
+            "add-group",
             "add-group-cards",
             "add-group-passwords",
             "add-group-identities",

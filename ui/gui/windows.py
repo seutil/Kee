@@ -193,6 +193,7 @@ class MainWindow(QMainWindow):
         self.__database.close()
         self.__setCurrentDatabase(None)
         self.__tree_databases.viewport().update()
+        self.__tbl_group.setModel(None)
 
     @pyqtSlot()
     def __changeMasterKey(self) -> None:

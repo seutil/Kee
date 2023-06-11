@@ -40,16 +40,19 @@ class Config:
         if not os.path.exists(self._config_dir):
             os.makedirs(self._config_dir)
 
-        if not os.path.exists(self._config_path):
+        if not os.path.isfile(self._config_path):
             open(self._config_path, "x").close()
 
         with open(self._config_path, "r") as yaml_file:
             config = yaml.safe_load(yaml_file)
-            if config is None:
+            if config is None or "databases" not in config:
                 return
 
-            if "databases" in config:
-                self._databases = [SQLiteDatabase(loc) for loc in config["databases"]]
+            for loc in config["databases"]:
+                try:
+                    self._databases.append(SQLiteDatabase(loc))
+                except:
+                    continue
 
     def _save(self) -> None:
         with open(self._config_path, "w") as yaml_file:

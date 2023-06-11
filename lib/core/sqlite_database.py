@@ -4,7 +4,6 @@ import sqlite3
 import typing
 import json
 
-
 import lib.core.data.item as libitem
 import lib.core.data.factory as factory
 from .database import DatabaseInterface, ClosedError, Status, SALT_LENGTH
@@ -336,6 +335,9 @@ class SQLiteDatabase(DatabaseInterface):
         return db
 
     def __init__(self, location: str):
+        if not os.path.isfile(location):
+            raise ValueError(f"Invalid database location: {location}")
+
         super().__init__()
         self._location = location
         self._connection = sqlite3.connect(self._location)

@@ -113,6 +113,7 @@ class MainWindow(QMainWindow):
         self.__menu_card.addAction(self.__actions["card-copy-holder"])
 
     def __initUI(self) -> None:
+        self.setWindowIcon(QIcon(":/icons/ico"))
         self.__tbl_group = tables.GroupTable()
         self.__tree_databases = trees.DatabasesTree()
         for db in Config().databases():

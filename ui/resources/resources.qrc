@@ -1,6 +1,7 @@
 <!DOCTYPE RCC>
 <RCC version="1.0">
     <qresource prefix="icons">
+        <file alias="ico">icons/ico.png</file>
         <file alias="exit">icons/exit.png</file>
         <file alias="new">icons/new.png</file>
         <file alias="open">icons/open.png</file>

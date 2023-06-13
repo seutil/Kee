@@ -40,11 +40,11 @@ class OpenDatabaseDialog(QFileDialog):
         super().__init__(*args, **kwargs)
         self.setWindowTitle("Open Database...")
         self.setFileMode(QFileDialog.ExistingFile)
-        self.setAcceptMode(QFileDialog.AcceptSave)
+        self.setAcceptMode(QFileDialog.AcceptOpen)
         self.setNameFilters([
             f"Kee Database (*.{DATABASE_FILE_EXTENSION})",
             "All Files (*.*)"
         ])
 
     def location(self) -> str:
-        self.selectedFiles()[0]
+        return self.selectedFiles()[0]

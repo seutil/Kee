@@ -8,6 +8,7 @@ import lib.crypto.hasher as hasher
 import lib.crypto.cipher as cipher
 import lib.crypto.generate as generate
 import lib.core.data.factory as factory
+import lib.ptools as ptools
 from lib.core.config import Config
 from lib.core.database import Status, DatabaseInterface
 from lib.core.sqlite_database import SQLiteDatabase
@@ -410,6 +411,12 @@ class NewDatabaseWindow(QDialog):
         if msg is not None:
             msg.exec_()
             return
+
+        master_key = self.__edt_master_key.text()
+        if ptools.strength(master_key) == ptools.Strength.WEAK:
+            cont = QMessageBox.question(self, "New Database", "Specified master key is weak. Use it?")
+            if cont == QMessageBox.No:
+                return
 
         additional = self.__chk_additional.checkState() == Qt.Checked
         hasher_ = hasher.from_id(self.__cbx_hash.currentText())

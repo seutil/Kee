@@ -73,6 +73,9 @@ class MainWindow(QMainWindow):
             "card-copy-number": QAction("Copy Number", self),
             "card-copy-cvv": QAction("Copy CVV", self),
             "card-copy-holder": QAction("Copy Holder", self),
+
+            # tools
+            "generate-password": QAction(QIcon(":/icons/generate"), "Generate Password", self, shortcut="Ctrl+G")
         }
 
     def __initMenu(self) -> None:
@@ -113,6 +116,9 @@ class MainWindow(QMainWindow):
         self.__menu_card.addAction(self.__actions["card-copy-cvv"])
         self.__menu_card.addAction(self.__actions["card-copy-holder"])
 
+        menu_tools = self.menuBar().addMenu("Tools")
+        menu_tools.addAction(self.__actions["generate-password"])
+
     def __initUI(self) -> None:
         self.setWindowIcon(QIcon(":/icons/ico"))
         self.__tbl_group = tables.GroupTable()
@@ -152,6 +158,7 @@ class MainWindow(QMainWindow):
         self.__actions["card-copy-holder"].triggered.connect(lambda: self.__clipboard.setText(self.__item.entry("holder")))
         self.__actions["card-copy-cvv"].triggered.connect(lambda: self.__clipboard.setText(self.__item.entry("cvv")))
         self.__actions["card-copy-number"].triggered.connect(lambda: self.__clipboard.setText(self.__item.entry("number")))
+        self.__actions["generate-password"].triggered.connect(lambda: GeneratePasswordWindow(self).exec_())
 
         self.__tree_databases.databaseOpening.connect(self.__unlockDatabase)
         self.__tree_databases.databaseSelected.connect(self.__setCurrentDatabase)
@@ -746,3 +753,75 @@ class EditIdentityWindow(QDialog):
             msg.setInformativeText("Full name cannot be empty")
 
         return None if not msg.informativeText() else msg
+
+
+class GeneratePasswordWindow(QDialog):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.__initUI()
+
+    def __initUI(self) -> None:
+        self.resize(175, 230)
+        self.setWindowTitle("Generate Password")
+        self.setWindowFlags(self.windowFlags() & ~Qt.WindowContextHelpButtonHint)
+
+        self.__lbl_number = QLabel("Number of passwords")
+        self.__lbl_length = QLabel("Passwords length")
+        self.__sbox_number = QSpinBox(minimum=1)
+        self.__sbox_length = QSpinBox(minimum=6)
+        self.__chk_upper_case = QCheckBox("Upper-case", toolTip="A, B, C, ...")
+        self.__chk_lower_case = QCheckBox("Lower-case", toolTip="a, b, c, ...")
+        self.__chk_digits = QCheckBox("Digits", toolTip="1, 2, 3, ...")
+        self.__chk_minus = QCheckBox("Minus", toolTip="-")
+        self.__chk_underline = QCheckBox("Underline", toolTip="_")
+        self.__chk_space = QCheckBox("Space")
+        self.__chk_special = QCheckBox("Special", toolTip="!, ?, %, &, ...")
+        self.__chk_brackets = QCheckBox("Brackets", toolTip="[], {}, ()")
+        self.__edit_include_chars = QLineEdit()
+        self.__btn_generate = QPushButton(QIcon(":/icons/generate"), "", toolTip="Generate Password")
+
+        self.__chk_upper_case.setChecked(True)
+        self.__chk_lower_case.setChecked(True)
+        self.__chk_digits.setChecked(True)
+
+        self.__lbl_number.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Preferred)
+        self.__lbl_length.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Preferred)
+        self.__sbox_number.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Preferred)
+        self.__sbox_length.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Preferred)
+
+        lyt_general = QHBoxLayout()
+        lyt_general.addWidget(self.__lbl_number)
+        lyt_general.addWidget(self.__sbox_number)
+        lyt_general.addSpacing(10)
+        lyt_general.addWidget(self.__lbl_length)
+        lyt_general.addWidget(self.__sbox_length)
+
+        lyt_settings = QGridLayout()
+        lyt_settings.addWidget(self.__chk_upper_case, 0, 0)
+        lyt_settings.addWidget(self.__chk_lower_case, 0, 1)
+        lyt_settings.addWidget(self.__chk_digits, 0, 2)
+        lyt_settings.addWidget(self.__chk_minus, 1, 0)
+        lyt_settings.addWidget(self.__chk_underline, 1, 1)
+        lyt_settings.addWidget(self.__chk_space, 1, 2)
+        lyt_settings.addWidget(self.__chk_special, 2, 0)
+        lyt_settings.addWidget(self.__chk_brackets, 2, 1)
+        gbox_settings = QGroupBox("Settings")
+        gbox_settings.setLayout(lyt_settings)
+
+        lyt_buttons = QHBoxLayout()
+        lyt_buttons.addStretch()
+        lyt_buttons.addWidget(self.__btn_generate)
+
+        lyt_include_chars = QHBoxLayout()
+        lyt_include_chars.addWidget(QLabel("Include characters"))
+        lyt_include_chars.addWidget(self.__edit_include_chars)
+
+        lyt_main = QVBoxLayout()
+        lyt_main.addLayout(lyt_general)
+        lyt_main.addSpacing(8)
+        lyt_main.addWidget(gbox_settings)
+        lyt_main.addLayout(lyt_include_chars)
+        lyt_main.addStretch()
+        lyt_main.addLayout(lyt_buttons)
+        self.setLayout(lyt_main)

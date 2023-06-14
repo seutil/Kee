@@ -1,4 +1,5 @@
 
+import string
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
@@ -760,6 +761,7 @@ class GeneratePasswordWindow(QDialog):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.__initUI()
+        self.__initConnections()
 
     def __initUI(self) -> None:
         self.resize(175, 230)
@@ -778,9 +780,11 @@ class GeneratePasswordWindow(QDialog):
         self.__chk_space = QCheckBox("Space")
         self.__chk_special = QCheckBox("Special", toolTip="!, ?, %, &, ...")
         self.__chk_brackets = QCheckBox("Brackets", toolTip="[], {}, ()")
-        self.__edit_include_chars = QLineEdit()
+        self.__edt_include_chars = QLineEdit()
+        self.__lbox_passwords = QListWidget()
         self.__btn_generate = QPushButton(QIcon(":/icons/generate"), "", toolTip="Generate Password")
 
+        self.__lbox_passwords.setVisible(False)
         self.__chk_upper_case.setChecked(True)
         self.__chk_lower_case.setChecked(True)
         self.__chk_digits.setChecked(True)
@@ -815,13 +819,57 @@ class GeneratePasswordWindow(QDialog):
 
         lyt_include_chars = QHBoxLayout()
         lyt_include_chars.addWidget(QLabel("Include characters"))
-        lyt_include_chars.addWidget(self.__edit_include_chars)
+        lyt_include_chars.addWidget(self.__edt_include_chars)
 
         lyt_main = QVBoxLayout()
         lyt_main.addLayout(lyt_general)
         lyt_main.addSpacing(8)
         lyt_main.addWidget(gbox_settings)
         lyt_main.addLayout(lyt_include_chars)
-        lyt_main.addStretch()
+        lyt_main.addWidget(self.__lbox_passwords)
+        lyt_main.addSpacing(12)
         lyt_main.addLayout(lyt_buttons)
         self.setLayout(lyt_main)
+
+    def __initConnections(self) -> None:
+        self.__btn_generate.clicked.connect(self.__generatePasswords)
+        self.__lbox_passwords.itemDoubleClicked.connect(lambda item: QApplication.clipboard().setText(item.text()))
+
+    def __generatePasswords(self) -> None:
+        alphabet = self.__createAlphabet()
+        if not alphabet:
+            QMessageBox.critical(self, "Generate Password", "Password characters is not specified")
+            return
+
+        self.__lbox_passwords.clear()
+        self.__lbox_passwords.setVisible(True)
+        for _ in range(self.__sbox_number.value()):
+            self.__lbox_passwords.addItem(generate.password(self.__sbox_length.value(), alphabet))
+
+    def __createAlphabet(self) -> str:
+        alphabet = self.__edt_include_chars.text()
+        if self.__chk_upper_case.isChecked():
+            alphabet += string.ascii_uppercase
+
+        if self.__chk_lower_case.isChecked():
+            alphabet += string.ascii_lowercase
+
+        if self.__chk_digits:
+            alphabet += string.digits
+
+        if self.__chk_minus.isChecked():
+            alphabet += "-"
+
+        if self.__chk_underline.isChecked():
+            alphabet += "_"
+
+        if self.__chk_space.isChecked():
+            alphabet += string.whitespace
+
+        if self.__chk_special.isChecked():
+            alphabet += "!@#№$%^&*<>"
+
+        if self.__chk_brackets.isChecked():
+            alphabet += "()[]{}"
+
+        return alphabet

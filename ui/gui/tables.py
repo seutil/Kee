@@ -3,7 +3,6 @@ from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 
-
 from lib.core.data.group import Type, GroupInterface, PasswordsGroup, CardsGroup, IdentitiesGroup
 from lib.core.data.item import ItemInterface
 

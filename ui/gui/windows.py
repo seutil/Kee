@@ -234,7 +234,7 @@ class MainWindow(QMainWindow):
     def __renameGroup(self) -> None:
         new_name = QInputDialog.getText(self, "Raname Group", "New group name: ", QLineEdit.Normal)[0]
         if not new_name:
-            QMessageBox.critical(self, "Raname Group", "Empty group name is not allowd")
+            QMessageBox.critical(self, "Raname Group", "Empty group name is not allowed")
             return
 
         self.__group.name(new_name)

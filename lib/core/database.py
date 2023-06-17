@@ -67,3 +67,6 @@ class DatabaseInterface(QMetaType):
 
     def remove_group(self, group: "GroupInterface") -> None:
         raise NotImplementedError("DatabaseInterface.delete_group is not implemented")
+
+    def __eq__(self, other):
+        return self.location() == other.location()

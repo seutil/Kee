@@ -182,7 +182,9 @@ class MainWindow(QMainWindow):
         if not dlg.exec_():
             return
 
-        self.__tree_databases.addDatabase(SQLiteDatabase(dlg.location()))
+        db = SQLiteDatabase(dlg.location())
+        self.__tree_databases.addDatabase(db)
+        Config().add_database(db)
 
     @pyqtSlot()
     def __removeDatabase(self) -> None:

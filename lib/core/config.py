@@ -29,6 +29,9 @@ class Config:
         return self._databases
 
     def add_database(self, database: SQLiteDatabase) -> None:
+        if database in self._databases:
+            return
+
         self._databases.append(database)
         self._save()
 
